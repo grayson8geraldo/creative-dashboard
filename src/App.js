@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Play, Pause, TrendingUp, TrendingDown, Eye, Users, Target, Clock, Filter, Search, RefreshCw, Calendar, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
+import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,12 +63,6 @@ function App() {
   const resetConfig = () => {
     setTempConfig(config);
     setShowConfig(false);
-  };
-
-  // Function to extract spreadsheet ID from Google Sheets URL
-  const extractSpreadsheetId = (url) => {
-    const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    return match ? match[1] : '';
   };
 
   // Auto-complete base URL when spreadsheet ID is detected
@@ -435,15 +429,15 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (isConfigured) {
-      loadData();
-      
-      // Auto-refresh every 5 minutes
-      const interval = setInterval(loadData, 5 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isConfigured, GOOGLE_SHEETS_URLS]);
+useEffect(() => {
+  if (isConfigured) {
+    loadData();
+    
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(loadData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }
+}, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter data with project support
   const filteredCreatives = useMemo(() => {
