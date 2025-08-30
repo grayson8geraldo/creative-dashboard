@@ -58,6 +58,8 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
+    // Force data reload after saving config
+    setTimeout(() => loadData(), 100);
   };
 
   const resetConfig = () => {
@@ -67,18 +69,22 @@ function App() {
 
   // Auto-complete base URL when spreadsheet ID is detected
   const handleUrlChange = (project, value) => {
-    let processedValue = value;
+    let processedUrl = value;
     
-    // If it looks like just a spreadsheet ID, build the full URL
-    if (value && !value.includes('docs.google.com') && value.length > 20) {
-      processedValue = `https://docs.google.com/spreadsheets/d/${value}`;
+    // Use regex to find spreadsheet ID from any URL
+    const match = value.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    
+    if (match && match[1]) {
+      processedUrl = `https://docs.google.com/spreadsheets/d/${match[1]}`;
+    } else if (value && !value.includes('docs.google.com') && value.length > 20) {
+      processedUrl = `https://docs.google.com/spreadsheets/d/${value}`;
     }
     
     setTempConfig(prev => ({
       ...prev,
       [project]: {
         ...prev[project],
-        url: processedValue
+        url: processedUrl
       }
     }));
   };
@@ -114,8 +120,8 @@ function App() {
         
         csvData = await response.text();
         
-        if (!csvData || csvData.trim().length < 50) {
-          throw new Error('Received empty or too short data');
+        if (!csvData || csvData.trim().length < 50 || csvData.trim().startsWith("<!DOCTYPE html>")) {
+          throw new Error('Received empty or invalid data (likely HTML page)');
         }
         
         console.log(`✅ ${project} data loaded successfully!`);
@@ -272,7 +278,7 @@ function App() {
 
   const loadData = async () => {
     if (!isConfigured) {
-      setError('Пожалуйста, сначала настройте ваши Google Sheets');
+      // Don't set an error, just return, so the welcome screen can show.
       return;
     }
 
@@ -311,6 +317,7 @@ function App() {
       // Use the latest date from any project
       const combinedLatestDate = Object.values(processedProjects)
         .map(p => p.latestDate)
+        .filter(Boolean)
         .sort()
         .reverse()[0];
 
@@ -370,9 +377,12 @@ function App() {
         return b.totalUsers - a.totalUsers;
       });
 
-      // Calculate project statistics
+      // =================================================================
+      // START: ИСПРАВЛЕННЫЙ БЛОК
+      // =================================================================
       const projectStats = {};
-      Object.keys(config).forEach(projectKey => {
+      // Iterate over SUCCESSFULLY processed projects, not all configured projects
+      Object.keys(processedProjects).forEach(projectKey => {
         const projectCreatives = creativeAnalytics.filter(c => c.project === projectKey);
         const projectActiveCreatives = allActiveCreatives.filter(item => item.project === projectKey);
         
@@ -384,6 +394,9 @@ function App() {
           totalAccounts: processedProjects[projectKey].accounts.length
         };
       });
+      // =================================================================
+      // END: ИСПРАВЛЕННЫЙ БЛОК
+      // =================================================================
 
       const activeCount = creativeAnalytics.filter(c => c.status === 'active').length;
       const totalCurrentUsers = creativeAnalytics.filter(c => c.status === 'active').reduce((sum, c) => sum + c.currentUsers, 0);
@@ -391,14 +404,14 @@ function App() {
       setDashboardData({
         latestDate: combinedLatestDate,
         creativeAnalytics: creativeAnalytics,
-        allAccounts: allAccounts,
+        allAccounts: [...new Set(allAccounts)],
         activeCreativesOnLastDate: allActiveCreatives,
         projectStats: projectStats,
         summary: {
           totalCreatives: allUniqueCreatives.size,
           activeCreatives: activeCount,
           freeCreatives: allUniqueCreatives.size - activeCount,
-          totalAccounts: allAccounts.length,
+          totalAccounts: [...new Set(allAccounts)].length,
           accountColumns: Object.values(processedProjects).reduce((sum, p) => sum + p.accountColumns, 0),
           totalUsersAllTime: creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0),
           totalCurrentUsers: totalCurrentUsers,
@@ -429,15 +442,16 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (isConfigured) {
-      loadData();
-      
-      // Auto-refresh every 5 minutes
-      const interval = setInterval(loadData, 5 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
+// Измененный код
+useEffect(() => {
+  if (isConfigured) {
+    loadData();
+
+    // Auto-refresh every 12 hours
+    const interval = setInterval(loadData, 12 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }
+}, [isConfigured, GOOGLE_SHEETS_URLS]);
 
   // Filter data with project support
   const filteredCreatives = useMemo(() => {
@@ -516,7 +530,6 @@ function App() {
                 <li>4. Настройте ваши проекты ниже</li>
               </ol>
               
-              {/* Ссылка на подробный гайд */}
               <div style={{
                 marginTop: '12px',
                 padding: '12px',
@@ -648,7 +661,10 @@ function App() {
               Попробовать снова
             </button>
             <button 
-              onClick={() => setShowConfig(true)}
+              onClick={() => {
+                setError(null);
+                setShowConfig(true);
+              }}
               style={{
                 backgroundColor: '#4b5563',
                 color: 'white',
@@ -1566,3 +1582,4 @@ function App() {
 }
 
 export default App;
+}
