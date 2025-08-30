@@ -492,31 +492,53 @@ function App() {
             <p style={{ color: '#9ca3af' }}>Configure your Google Sheets to get started</p>
           </div>
           
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{
-              backgroundColor: 'rgba(30, 58, 138, 0.3)',
-              padding: '16px',
-              borderRadius: '8px',
-              border: '1px solid #2563eb',
-              marginBottom: '24px'
-            }}>
-              <h3 style={{
-                fontWeight: '600',
-                marginBottom: '8px'
-              }}>📋 Setup Instructions:</h3>
-              <ol style={{
-                fontSize: '14px',
-                color: '#d1d5db',
-                lineHeight: '1.5',
-                paddingLeft: '16px'
-              }}>
-                <li>1. Open your Google Sheet with creative analytics data</li>
-                <li>2. Make sure it's publicly accessible (Anyone with link can view)</li>
-                <li>3. Copy the sheet URL and find the GID for each tab</li>
-                <li>4. Configure your projects below</li>
-              </ol>
-            </div>
-            
+         <div style={{ 
+  display: 'flex', 
+  gap: '12px',
+  marginTop: '16px'
+}}>
+  <button 
+    onClick={() => setShowConfig(true)}
+    style={{
+      flex: 2,
+      backgroundColor: '#2563eb',
+      color: 'white',
+      padding: '12px 24px',
+      borderRadius: '8px',
+      border: 'none',
+      fontSize: '16px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px'
+    }}
+  >
+    <Settings style={{ width: '16px', height: '16px' }} />
+    Configure Google Sheets
+  </button>
+  
+  <a 
+    href="ВАША_ССЫЛКА_НА_GOOGLE_DOC"
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      flex: 1,
+      backgroundColor: '#059669',
+      color: 'white',
+      padding: '12px 24px',
+      borderRadius: '8px',
+      fontSize: '14px',
+      textDecoration: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px'
+    }}
+  >
+    📖 Гайд
+  </a>
+</div>            
             <button 
               onClick={() => setShowConfig(true)}
               style={{
