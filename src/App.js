@@ -272,7 +272,7 @@ function App() {
 
   const loadData = async () => {
     if (!isConfigured) {
-      setError('Please configure your Google Sheets URLs first');
+      setError('Пожалуйста, сначала настройте ваши Google Sheets');
       return;
     }
 
@@ -411,14 +411,14 @@ function App() {
     } catch (error) {
       console.error('❌ Critical loading error:', error);
       
-      let errorMessage = 'Error loading data from Google Sheets';
+      let errorMessage = 'Ошибка загрузки данных из Google Sheets';
       
       if (error.message.includes('HTTP 403')) {
-        errorMessage = 'Access denied to spreadsheet. Make the spreadsheet public for reading.';
+        errorMessage = 'Доступ к таблице запрещен. Сделайте таблицу публичной для чтения.';
       } else if (error.message.includes('HTTP 404')) {
-        errorMessage = 'Spreadsheet not found. Check the spreadsheet ID and sheet GIDs.';
+        errorMessage = 'Таблица не найдена. Проверьте ID таблицы и GID вкладок.';
       } else if (error.message.includes('Failed to fetch')) {
-        errorMessage = 'Internet connection problem or CORS issue. Check your connection.';
+        errorMessage = 'Проблема с интернет-соединением или CORS. Проверьте подключение.';
       } else {
         errorMessage = error.message;
       }
@@ -488,57 +488,63 @@ function App() {
               fontSize: '30px',
               fontWeight: 'bold',
               marginBottom: '8px'
-            }}>Welcome to Multi-Project Dashboard</h1>
-            <p style={{ color: '#9ca3af' }}>Configure your Google Sheets to get started</p>
+            }}>Добро пожаловать в Multi-Project Dashboard</h1>
+            <p style={{ color: '#9ca3af' }}>Настройте ваши Google Таблицы для начала работы</p>
           </div>
           
-         <div style={{ 
-  display: 'flex', 
-  gap: '12px',
-  marginTop: '16px'
-}}>
-  <button 
-    onClick={() => setShowConfig(true)}
-    style={{
-      flex: 2,
-      backgroundColor: '#2563eb',
-      color: 'white',
-      padding: '12px 24px',
-      borderRadius: '8px',
-      border: 'none',
-      fontSize: '16px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px'
-    }}
-  >
-    <Settings style={{ width: '16px', height: '16px' }} />
-    Configure Google Sheets
-  </button>
-  
-  <a 
-    href="ВАША_ССЫЛКА_НА_GOOGLE_DOC"
-    target="_blank"
-    rel="noopener noreferrer"
-    style={{
-      flex: 1,
-      backgroundColor: '#059669',
-      color: 'white',
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      textDecoration: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px'
-    }}
-  >
-    📖 Гайд
-  </a>
-</div>            
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              backgroundColor: 'rgba(30, 58, 138, 0.3)',
+              padding: '16px',
+              borderRadius: '8px',
+              border: '1px solid #2563eb',
+              marginBottom: '24px'
+            }}>
+              <h3 style={{
+                fontWeight: '600',
+                marginBottom: '8px'
+              }}>📋 Инструкция по настройке:</h3>
+              <ol style={{
+                fontSize: '14px',
+                color: '#d1d5db',
+                lineHeight: '1.5',
+                paddingLeft: '16px'
+              }}>
+                <li>1. Откройте вашу Google Таблицу с данными креативов</li>
+                <li>2. Сделайте её публично доступной (Доступ по ссылке)</li>
+                <li>3. Скопируйте URL таблицы и найдите GID каждой вкладки</li>
+                <li>4. Настройте ваши проекты ниже</li>
+              </ol>
+              
+              {/* Ссылка на подробный гайд */}
+              <div style={{
+                marginTop: '12px',
+                padding: '12px',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                borderRadius: '6px',
+                border: '1px solid #22c55e'
+              }}>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#22c55e',
+                  marginBottom: '8px',
+                  fontWeight: '500'
+                }}>📖 Подробная инструкция:</p>
+                <a 
+                  href="https://docs.google.com/document/d/19d3df8PlQHD735yJjiVV9HhPWxP71NKnzIN84dn8LSg/edit?usp=sharing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#22c55e',
+                    fontSize: '14px',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Открыть полное руководство по настройке →
+                </a>
+              </div>
+            </div>
+            
             <button 
               onClick={() => setShowConfig(true)}
               style={{
@@ -557,7 +563,7 @@ function App() {
               }}
             >
               <Settings style={{ width: '16px', height: '16px' }} />
-              Configure Google Sheets
+              Настроить Google Таблицы
             </button>
           </div>
         </div>
@@ -583,12 +589,12 @@ function App() {
             margin: '0 auto 16px auto',
             animation: 'spin 1s linear infinite'
           }} />
-          <p style={{ fontSize: '20px' }}>Loading multi-project data from Google Sheets...</p>
+          <p style={{ fontSize: '20px' }}>Загрузка данных из Google Таблиц...</p>
           <p style={{
             fontSize: '14px',
             color: '#9ca3af',
             marginTop: '8px'
-          }}>Connecting to configured sheets</p>
+          }}>Подключение к настроенным таблицам</p>
         </div>
       </div>
     );
@@ -614,7 +620,7 @@ function App() {
           <p style={{
             fontSize: '20px',
             color: '#f87171'
-          }}>Connection Error</p>
+          }}>Ошибка подключения</p>
           <p style={{
             color: '#9ca3af',
             marginBottom: '16px'
@@ -639,7 +645,7 @@ function App() {
               }}
             >
               <RefreshCw style={{ width: '16px', height: '16px' }} />
-              Try Again
+              Попробовать снова
             </button>
             <button 
               onClick={() => setShowConfig(true)}
@@ -656,7 +662,7 @@ function App() {
               }}
             >
               <Settings style={{ width: '16px', height: '16px' }} />
-              Configure
+              Настроить
             </button>
           </div>
         </div>
@@ -708,7 +714,7 @@ function App() {
               <h2 style={{
                 fontSize: '24px',
                 fontWeight: 'bold'
-              }}>Configure Google Sheets</h2>
+              }}>Настройка Google Таблиц</h2>
               <button 
                 onClick={resetConfig}
                 style={{
@@ -739,7 +745,7 @@ function App() {
                     <span style={{ fontSize: '24px' }}>{project.emoji}</span>
                     <input
                       type="text"
-                      placeholder="Project Name"
+                      placeholder="Название проекта"
                       style={{
                         backgroundColor: '#6b7280',
                         color: 'white',
@@ -762,10 +768,10 @@ function App() {
                       fontSize: '14px',
                       fontWeight: '500',
                       marginBottom: '8px'
-                    }}>Google Sheet URL or Spreadsheet ID:</label>
+                    }}>URL Google Таблицы или ID таблицы:</label>
                     <input
                       type="text"
-                      placeholder="https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID or just the ID"
+                      placeholder="https://docs.google.com/spreadsheets/d/ВАШ_ID_ТАБЛИЦЫ или только ID"
                       style={{
                         width: '100%',
                         backgroundColor: '#6b7280',
@@ -783,7 +789,7 @@ function App() {
                       color: '#9ca3af',
                       marginTop: '4px'
                     }}>
-                      Paste the full URL or just the spreadsheet ID
+                      Вставьте полный URL или только ID таблицы
                     </p>
                   </div>
                   
@@ -793,10 +799,10 @@ function App() {
                       fontSize: '14px',
                       fontWeight: '500',
                       marginBottom: '8px'
-                    }}>Sheet GID (Tab ID):</label>
+                    }}>GID вкладки (ID вкладки):</label>
                     <input
                       type="text"
-                      placeholder="0 (for first tab) or specific GID"
+                      placeholder="0 (для первой вкладки) или конкретный GID"
                       style={{
                         width: '100%',
                         backgroundColor: '#6b7280',
@@ -817,7 +823,7 @@ function App() {
                       color: '#9ca3af',
                       marginTop: '4px'
                     }}>
-                      Find this in the URL when viewing the specific tab: #gid=123456789
+                      Найдите в URL при просмотре конкретной вкладки: #gid=123456789
                     </p>
                   </div>
                 </div>
@@ -834,16 +840,16 @@ function App() {
               <h4 style={{
                 fontWeight: '600',
                 marginBottom: '8px'
-              }}>💡 Quick Setup Guide:</h4>
+              }}>💡 Краткое руководство:</h4>
               <div style={{
                 fontSize: '14px',
                 color: '#d1d5db',
                 lineHeight: '1.5'
               }}>
-                <p><strong>1. Share your Google Sheet:</strong> File → Share → Anyone with link can view</p>
-                <p><strong>2. Copy the URL:</strong> Your browser's address bar when viewing the sheet</p>
-                <p><strong>3. Find GID:</strong> Each tab has #gid=NUMBERS at the end of URL</p>
-                <p><strong>4. Data format:</strong> Columns should be Date, Account_1, Creative_1, Users_1, Account_2, etc.</p>
+                <p><strong>1. Откройте доступ к Google Таблице:</strong> Файл → Поделиться → Доступ по ссылке</p>
+                <p><strong>2. Скопируйте URL:</strong> Адресная строка браузера при просмотре таблицы</p>
+                <p><strong>3. Найдите GID:</strong> У каждой вкладки есть #gid=ЦИФРЫ в конце URL</p>
+                <p><strong>4. Формат данных:</strong> Колонки должны быть Date, Account_1, Creative_1, Users_1, Account_2, и т.д.</p>
               </div>
             </div>
             
@@ -868,7 +874,7 @@ function App() {
                 }}
               >
                 <Save style={{ width: '16px', height: '16px' }} />
-                Save Configuration
+                Сохранить настройки
               </button>
               <button 
                 onClick={resetConfig}
@@ -881,7 +887,7 @@ function App() {
                   cursor: 'pointer'
                 }}
               >
-                Cancel
+                Отмена
               </button>
             </div>
           </div>
@@ -914,10 +920,10 @@ function App() {
               marginTop: '8px'
             }}>
               <p style={{ color: '#9ca3af' }}>
-                📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
-                📊 {stats.totalCreatives} creatives | 
-                🏢 {stats.totalAccounts} accounts |
-                📋 {stats.accountColumns} data columns
+                📅 Последняя дата: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
+                📊 {stats.totalCreatives} креативов | 
+                🏢 {stats.totalAccounts} аккаунтов |
+                📋 {stats.accountColumns} колонок данных
               </p>
               
               {/* Quick project switchers */}
@@ -939,7 +945,7 @@ function App() {
                     color: 'white'
                   }}
                 >
-                  📊 All Projects
+                  📊 Все проекты
                 </button>
                 {Object.entries(config).map(([projectKey, project]) => (
                   <button
@@ -967,7 +973,7 @@ function App() {
                 color: '#6b7280',
                 marginTop: '4px'
               }}>
-                🔄 Last update: {lastUpdate}
+                🔄 Последнее обновление: {lastUpdate}
               </p>
             )}
           </div>
@@ -991,19 +997,19 @@ function App() {
               }}
             >
               <Settings style={{ width: '16px', height: '16px' }} />
-              Configure
+              Настроить
             </button>
             <div style={{ textAlign: 'right' }}>
               <div style={{
                 fontSize: '14px',
                 color: '#9ca3af'
-              }}>Google Sheets sync</div>
+              }}>Синхронизация с Google Таблицами</div>
               <div style={{
                 fontSize: '18px',
                 fontWeight: '600',
                 color: '#10b981'
               }}>
-                {loading ? 'Updating...' : '✓ Connected'}
+                {loading ? 'Обновление...' : '✓ Подключено'}
               </div>
             </div>
             <button 
@@ -1026,7 +1032,7 @@ function App() {
                 height: '16px',
                 animation: loading ? 'spin 1s linear infinite' : 'none'
               }} />
-              Refresh
+              Обновить
             </button>
           </div>
         </div>
@@ -1053,7 +1059,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>🟢 Active</p>
+                }}>🟢 Активные</p>
                 <p style={{
                   fontSize: '30px',
                   fontWeight: 'bold'
@@ -1071,7 +1077,7 @@ function App() {
                      dashboardData.projectStats[projectFilter]?.activeCreatives || 0) / 
                     (projectFilter === 'all' ? stats.totalCreatives :
                      dashboardData.projectStats[projectFilter]?.totalCreatives || 1)
-                  ) * 100)}% of all
+                  ) * 100)}% от всех
                 </p>
               </div>
               <Play style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
@@ -1093,7 +1099,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>⚪ Free</p>
+                }}>⚪ Свободные</p>
                 <p style={{
                   fontSize: '30px',
                   fontWeight: 'bold'
@@ -1121,7 +1127,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>👥 Today</p>
+                }}>👥 Сегодня</p>
                 <p style={{
                   fontSize: '24px',
                   fontWeight: 'bold'
@@ -1133,7 +1139,7 @@ function App() {
                   color: 'rgba(255, 255, 255, 0.7)',
                   fontSize: '12px',
                   marginTop: '4px'
-                }}>active users</p>
+                }}>активных пользователей</p>
               </div>
               <Users style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
@@ -1154,7 +1160,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>📈 All time</p>
+                }}>📈 За всё время</p>
                 <p style={{
                   fontSize: '24px',
                   fontWeight: 'bold'
@@ -1166,7 +1172,7 @@ function App() {
                   color: 'rgba(255, 255, 255, 0.7)',
                   fontSize: '12px',
                   marginTop: '4px'
-                }}>total users</p>
+                }}>всего пользователей</p>
               </div>
               <BarChart3 style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
@@ -1187,7 +1193,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>🎯 Accounts</p>
+                }}>🎯 Аккаунты</p>
                 <p style={{
                   fontSize: '30px',
                   fontWeight: 'bold'
@@ -1199,7 +1205,7 @@ function App() {
                   color: 'rgba(255, 255, 255, 0.7)',
                   fontSize: '12px',
                   marginTop: '4px'
-                }}>active</p>
+                }}>активных</p>
               </div>
               <Target style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
@@ -1220,7 +1226,7 @@ function App() {
                 <p style={{
                   color: 'rgba(255, 255, 255, 0.8)',
                   fontSize: '14px'
-                }}>📊 Total creatives</p>
+                }}>📊 Всего креативов</p>
                 <p style={{
                   fontSize: '30px',
                   fontWeight: 'bold'
@@ -1232,7 +1238,7 @@ function App() {
                   color: 'rgba(255, 255, 255, 0.7)',
                   fontSize: '12px',
                   marginTop: '4px'
-                }}>in project</p>
+                }}>в проекте</p>
               </div>
               <Eye style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
@@ -1263,7 +1269,7 @@ function App() {
               }} />
               <input
                 type="text"
-                placeholder="Search creatives..."
+                placeholder="Поиск креативов..."
                 style={{
                   width: '100%',
                   backgroundColor: '#4b5563',
@@ -1292,7 +1298,7 @@ function App() {
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
             >
-              <option value="all">🎯 All Projects</option>
+              <option value="all">🎯 Все проекты</option>
               {Object.entries(config).map(([projectKey, project]) => (
                 <option key={projectKey} value={projectKey}>
                   {project.emoji} {project.name} ({dashboardData.projectStats[projectKey]?.totalCreatives || 0})
@@ -1311,12 +1317,12 @@ function App() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">📋 All statuses</option>
-              <option value="active">🟢 Active ({
+              <option value="all">📋 Все статусы</option>
+              <option value="active">🟢 Активные ({
                 projectFilter === 'all' ? stats.activeCreatives : 
                 dashboardData.projectStats[projectFilter]?.activeCreatives || 0
               })</option>
-              <option value="free">⚪ Free</option>
+              <option value="free">⚪ Свободные</option>
             </select>
 
             <select 
@@ -1330,7 +1336,7 @@ function App() {
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
             >
-              <option value="all">🏢 All accounts</option>
+              <option value="all">🏢 Все аккаунты</option>
               {dashboardData.allAccounts.map(account => (
                 <option key={account} value={account}>
                   {account.length > 20 ? account.substring(0, 20) + '...' : account}
@@ -1349,10 +1355,10 @@ function App() {
               value={performanceFilter}
               onChange={(e) => setPerformanceFilter(e.target.value)}
             >
-              <option value="all">📊 All performance</option>
-              <option value="high">🔥 High (200+ users)</option>
-              <option value="medium">📈 Medium (50-200 or new)</option>
-              <option value="low">📉 Low (3+ accounts, &lt;2/day)</option>
+              <option value="all">📊 Вся эффективность</option>
+              <option value="high">🔥 Высокая (200+ пользователей)</option>
+              <option value="medium">📈 Средняя (50-200 или новые)</option>
+              <option value="low">📉 Низкая (3+ аккаунтов, &lt;2/день)</option>
             </select>
 
             <div style={{
@@ -1365,7 +1371,7 @@ function App() {
               alignItems: 'center'
             }}>
               <Filter style={{ width: '16px', height: '16px', marginRight: '8px' }} />
-              Showing: {filteredCreatives.length}
+              Показано: {filteredCreatives.length}
             </div>
           </div>
         </div>
@@ -1382,16 +1388,16 @@ function App() {
           <table style={{ width: '100%' }}>
             <thead style={{ backgroundColor: '#4b5563' }}>
               <tr>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Status</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Project</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Creative</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Current Users</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Total All Time</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Current Accounts</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📅 Days Active</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📊 Avg/day</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>🏢 Total Accounts</th>
-                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📈 Performance</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Статус</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Проект</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Креатив</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Пользователи сегодня</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Всего за всё время</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Текущие аккаунты</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📅 Дней активен</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📊 Среднее/день</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>🏢 Всего аккаунтов</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📈 Эффективность</th>
               </tr>
             </thead>
             <tbody>
@@ -1424,7 +1430,7 @@ function App() {
                         border: `1px solid ${isActive ? '#10b981' : '#6b7280'}`
                       }}>
                         {isActive ? <Play style={{ width: '12px', height: '12px' }} /> : <Pause style={{ width: '12px', height: '12px' }} />}
-                        {isActive ? 'Active' : 'Free'}
+                        {isActive ? 'Активен' : 'Свободен'}
                       </div>
                     </td>
                     <td style={{ padding: '16px' }}>
@@ -1448,7 +1454,7 @@ function App() {
                           fontSize: '14px',
                           color: '#9ca3af'
                         }}>
-                          {creative.creative.includes('.mp4') ? '🎥 Video' : '🎨 Creative'}
+                          {creative.creative.includes('.mp4') ? '🎥 Видео' : '🎨 Креатив'}
                         </div>
                       </div>
                     </td>
@@ -1495,14 +1501,14 @@ function App() {
                             color: '#9ca3af',
                             fontSize: '12px'
                           }}>
-                            +{creative.currentAccounts.length - 2} more
+                            +{creative.currentAccounts.length - 2} ещё
                           </span>
                         )}
                         {creative.currentAccounts.length === 0 && (
                           <span style={{
                             color: '#6b7280',
                             fontSize: '14px'
-                          }}>Not active</span>
+                          }}>Не активен</span>
                         )}
                       </div>
                     </td>
@@ -1521,9 +1527,9 @@ function App() {
                         color: creative.performance === 'high' ? '#10b981' :
                         creative.performance === 'medium' ? '#fbbf24' : '#f87171'
                       }}>
-                        {creative.performance === 'high' ? '🔥 High' :
-                         creative.performance === 'medium' ? '📈 Medium' :
-                         '📉 Low'}
+                        {creative.performance === 'high' ? '🔥 Высокая' :
+                         creative.performance === 'medium' ? '📈 Средняя' :
+                         '📉 Низкая'}
                       </div>
                     </td>
                   </tr>
@@ -1548,11 +1554,11 @@ function App() {
           <p style={{
             color: '#9ca3af',
             fontSize: '18px'
-          }}>No creatives found</p>
+          }}>Креативы не найдены</p>
           <p style={{
             color: '#6b7280',
             fontSize: '14px'
-          }}>Try changing your search filters</p>
+          }}>Попробуйте изменить фильтры поиска</p>
         </div>
       )}
     </div>
