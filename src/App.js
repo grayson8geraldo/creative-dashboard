@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-// ИСПРАВЛЕНО: Удалены неиспользуемые иконки (Play, Pause, Eye, и т.д.)
 import { RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
-  // ИСПРАВЛЕНО: Удалены неиспользуемые состояния для фильтров
-  // const [searchTerm, setSearchTerm] = useState('');
-  // const [statusFilter, setStatusFilter] = useState('all');
-  // const [accountFilter, setAccountFilter] = useState('all');
-  // const [performanceFilter, setPerformanceFilter] = useState('all');
-  // const [projectFilter, setProjectFilter] = useState('all');
-
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -234,9 +226,6 @@ function App() {
     }
   }, [isConfigured, loadData]);
 
-  // ИСПРАВЛЕНО: Удален неиспользуемый блок useMemo для filteredCreatives
-  // const filteredCreatives = useMemo(() => { ... });
-  
   if (!isConfigured && !showConfig) {
     return (
       <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -304,12 +293,12 @@ function App() {
     );
   }
 
-  if (!dashboardData) return null;
-
-  const stats = dashboardData.summary;
-
+  // ====================================================================
+  // НАЧАЛО ИСПРАВЛЕННОГО БЛОКА
+  // ====================================================================
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)', color: 'white', padding: '24px'}}>
+      {/* Модальное окно настроек будет отображаться всегда, когда showConfig === true */}
       {showConfig && (
         <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px'}}>
           <div style={{backgroundColor: '#374151', borderRadius: '12px', padding: '24px', maxWidth: '896px', width: '100%', maxHeight: '90vh', overflowY: 'auto'}}>
@@ -350,24 +339,32 @@ function App() {
         </div>
       )}
 
-      <div style={{marginBottom: '32px'}}>
-        <div>
-          <h1 style={{fontSize: '36px', fontWeight: 'bold', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>Multi-Project Creative Analytics Dashboard</h1>
-          <p style={{color: '#9ca3af', marginTop: '8px'}}>
-            📅 Последняя дата: <span style={{fontWeight: '600', color: 'white'}}>{dashboardData.latestDate}</span> | 📊 {stats.totalCreatives} креативов | 🏢 {stats.totalAccounts} аккаунтов
-          </p>
-          {lastUpdate && <p style={{fontSize: '12px', color: '#6b7280', marginTop: '4px'}}>🔄 Последнее обновление: {lastUpdate}</p>}
-        </div>
-      </div>
-      
-      <div style={{backgroundColor: '#374151', padding: '24px', borderRadius: '12px'}}>
-        <h2>Dashboard Content</h2>
-        <p>Active Creatives: {stats.activeCreatives}</p>
-        <p>Total Users: {stats.totalCurrentUsers}</p>
-        <p>Total Accounts: {stats.totalAccounts}</p>
-      </div>
+      {/* Дашборд будет отображаться только если есть данные и модальное окно закрыто */}
+      {dashboardData && !showConfig && (
+        <>
+          <div style={{marginBottom: '32px'}}>
+            <div>
+              <h1 style={{fontSize: '36px', fontWeight: 'bold', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>Multi-Project Creative Analytics Dashboard</h1>
+              <p style={{color: '#9ca3af', marginTop: '8px'}}>
+                📅 Последняя дата: <span style={{fontWeight: '600', color: 'white'}}>{dashboardData.latestDate}</span> | 📊 {dashboardData.summary.totalCreatives} креативов | 🏢 {dashboardData.summary.totalAccounts} аккаунтов
+              </p>
+              {lastUpdate && <p style={{fontSize: '12px', color: '#6b7280', marginTop: '4px'}}>🔄 Последнее обновление: {lastUpdate}</p>}
+            </div>
+          </div>
+          
+          <div style={{backgroundColor: '#374151', padding: '24px', borderRadius: '12px'}}>
+            <h2>Dashboard Content</h2>
+            <p>Active Creatives: {dashboardData.summary.activeCreatives}</p>
+            <p>Total Users: {dashboardData.summary.totalCurrentUsers}</p>
+            <p>Total Accounts: {dashboardData.summary.totalAccounts}</p>
+          </div>
+        </>
+      )}
     </div>
   );
+  // ====================================================================
+  // КОНЕЦ ИСПРАВЛЕННОГО БЛОКА
+  // ====================================================================
 }
 
 export default App;
