@@ -543,5 +543,3 @@ function App() {
 }
 
 export default App;
-" I have another error in Netlify, please solve this
-
