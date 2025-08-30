@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-// ИСПРАВЛЕНО: Возвращены иконки, необходимые для полного интерфейса
-import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
+// ИСПРАВЛЕНО: Удалена неиспользуемая иконка 'Target'
+import { Play, Pause, Eye, Users, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
   // Состояния для фильтров
@@ -543,4 +543,5 @@ function App() {
 }
 
 export default App;
+" I have another error in Netlify, please solve this
 
