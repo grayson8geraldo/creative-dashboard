@@ -429,15 +429,15 @@ function App() {
     }
   };
 
-useEffect(() => {
-  if (isConfigured) {
-    loadData();
-    
-    // Auto-refresh every 5 minutes
-    const interval = setInterval(loadData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }
-}, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (isConfigured) {
+      loadData();
+      
+      // Auto-refresh every 5 minutes
+      const interval = setInterval(loadData, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter data with project support
   const filteredCreatives = useMemo(() => {
@@ -460,18 +460,56 @@ useEffect(() => {
   // Show configuration screen if not configured
   if (!isConfigured && !showConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center">
-        <div className="bg-gray-800 p-8 rounded-xl shadow-lg max-w-2xl w-full mx-4">
-          <div className="text-center mb-8">
-            <Settings className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold mb-2">Welcome to Multi-Project Dashboard</h1>
-            <p className="text-gray-400">Configure your Google Sheets to get started</p>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          backgroundColor: '#374151',
+          padding: '32px',
+          borderRadius: '12px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          maxWidth: '672px',
+          width: '100%',
+          margin: '0 16px'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <Settings style={{
+              width: '64px',
+              height: '64px',
+              color: '#60a5fa',
+              margin: '0 auto 16px auto'
+            }} />
+            <h1 style={{
+              fontSize: '30px',
+              fontWeight: 'bold',
+              marginBottom: '8px'
+            }}>Welcome to Multi-Project Dashboard</h1>
+            <p style={{ color: '#9ca3af' }}>Configure your Google Sheets to get started</p>
           </div>
           
-          <div className="space-y-6">
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-600">
-              <h3 className="font-semibold mb-2">📋 Setup Instructions:</h3>
-              <ol className="text-sm space-y-1 text-gray-300">
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{
+              backgroundColor: 'rgba(30, 58, 138, 0.3)',
+              padding: '16px',
+              borderRadius: '8px',
+              border: '1px solid #2563eb',
+              marginBottom: '24px'
+            }}>
+              <h3 style={{
+                fontWeight: '600',
+                marginBottom: '8px'
+              }}>📋 Setup Instructions:</h3>
+              <ol style={{
+                fontSize: '14px',
+                color: '#d1d5db',
+                lineHeight: '1.5',
+                paddingLeft: '16px'
+              }}>
                 <li>1. Open your Google Sheet with creative analytics data</li>
                 <li>2. Make sure it's publicly accessible (Anyone with link can view)</li>
                 <li>3. Copy the sheet URL and find the GID for each tab</li>
@@ -480,10 +518,29 @@ useEffect(() => {
             </div>
             
             <button 
-              onClick={() => setShowConfig(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+              onClick={() => {
+                console.log('Button clicked - opening config');
+                setShowConfig(true);
+              }}
+              style={{
+                width: '100%',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                fontSize: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
             >
-              <Settings className="w-4 h-4" />
+              <Settings style={{ width: '16px', height: '16px' }} />
               Configure Google Sheets
             </button>
           </div>
@@ -494,11 +551,28 @@ useEffect(() => {
 
   if (loading && !dashboardData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-400" />
-          <p className="text-xl">Loading multi-project data from Google Sheets...</p>
-          <p className="text-sm text-gray-400 mt-2">Connecting to configured sheets</p>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <RefreshCw style={{
+            width: '48px',
+            height: '48px',
+            color: '#60a5fa',
+            margin: '0 auto 16px auto',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{ fontSize: '20px' }}>Loading multi-project data from Google Sheets...</p>
+          <p style={{
+            fontSize: '14px',
+            color: '#9ca3af',
+            marginTop: '8px'
+          }}>Connecting to configured sheets</p>
         </div>
       </div>
     );
@@ -506,24 +580,66 @@ useEffect(() => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <p className="text-xl text-red-400">Connection Error</p>
-          <p className="text-gray-400 mb-4">{error}</p>
-          <div className="flex gap-4 justify-center">
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <AlertCircle style={{
+            width: '64px',
+            height: '64px',
+            color: '#f87171',
+            margin: '0 auto 16px auto'
+          }} />
+          <p style={{
+            fontSize: '20px',
+            color: '#f87171'
+          }}>Connection Error</p>
+          <p style={{
+            color: '#9ca3af',
+            marginBottom: '16px'
+          }}>{error}</p>
+          <div style={{
+            display: 'flex',
+            gap: '16px',
+            justifyContent: 'center'
+          }}>
             <button 
               onClick={loadData}
-              className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+              style={{
+                backgroundColor: '#2563eb',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw style={{ width: '16px', height: '16px' }} />
               Try Again
             </button>
             <button 
               onClick={() => setShowConfig(true)}
-              className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+              style={{
+                backgroundColor: '#4b5563',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
-              <Settings className="w-4 h-4" />
+              <Settings style={{ width: '16px', height: '16px' }} />
               Configure
             </button>
           </div>
@@ -537,39 +653,85 @@ useEffect(() => {
   const stats = dashboardData.summary;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-6">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)',
+      color: 'white',
+      padding: '24px'
+    }}>
       {/* Configuration Modal */}
       {showConfig && (
         <div style={{
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 9999,
-  padding: '16px'
-}}>
-          <div className="bg-gray-800 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Configure Google Sheets</h2>
-              <button onClick={resetConfig} className="text-gray-400 hover:text-white">
-                <X className="w-6 h-6" />
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            backgroundColor: '#374151',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '896px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '24px'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold'
+              }}>Configure Google Sheets</h2>
+              <button 
+                onClick={resetConfig}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#9ca3af',
+                  cursor: 'pointer'
+                }}
+              >
+                <X style={{ width: '24px', height: '24px' }} />
               </button>
             </div>
             
-            <div className="space-y-6">
+            <div style={{ marginBottom: '24px' }}>
               {Object.entries(tempConfig).map(([projectKey, project]) => (
-                <div key={projectKey} className="bg-gray-700 p-4 rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-2xl">{project.emoji}</span>
+                <div key={projectKey} style={{
+                  backgroundColor: '#4b5563',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '16px'
+                  }}>
+                    <span style={{ fontSize: '24px' }}>{project.emoji}</span>
                     <input
                       type="text"
                       placeholder="Project Name"
-                      className="bg-gray-600 text-white px-3 py-2 rounded font-semibold"
+                      style={{
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        fontWeight: '600'
+                      }}
                       value={project.name}
                       onChange={(e) => setTempConfig(prev => ({
                         ...prev,
@@ -578,45 +740,90 @@ useEffect(() => {
                     />
                   </div>
                   
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Google Sheet URL or Spreadsheet ID:</label>
-                      <input
-                        type="text"
-                        placeholder="https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID or just the ID"
-                        className="w-full bg-gray-600 text-white px-3 py-2 rounded"
-                        value={project.url}
-                        onChange={(e) => handleUrlChange(projectKey, e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        Paste the full URL or just the spreadsheet ID
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Sheet GID (Tab ID):</label>
-                      <input
-                        type="text"
-                        placeholder="0 (for first tab) or specific GID"
-                        className="w-full bg-gray-600 text-white px-3 py-2 rounded"
-                        value={project.gid}
-                        onChange={(e) => setTempConfig(prev => ({
-                          ...prev,
-                          [projectKey]: { ...prev[projectKey], gid: e.target.value }
-                        }))}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">
-                        Find this in the URL when viewing the specific tab: #gid=123456789
-                      </p>
-                    </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      marginBottom: '8px'
+                    }}>Google Sheet URL or Spreadsheet ID:</label>
+                    <input
+                      type="text"
+                      placeholder="https://docs.google.com/spreadsheets/d/YOUR_SPREADSHEET_ID or just the ID"
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                      value={project.url}
+                      onChange={(e) => handleUrlChange(projectKey, e.target.value)}
+                    />
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      marginTop: '4px'
+                    }}>
+                      Paste the full URL or just the spreadsheet ID
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      marginBottom: '8px'
+                    }}>Sheet GID (Tab ID):</label>
+                    <input
+                      type="text"
+                      placeholder="0 (for first tab) or specific GID"
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        boxSizing: 'border-box'
+                      }}
+                      value={project.gid}
+                      onChange={(e) => setTempConfig(prev => ({
+                        ...prev,
+                        [projectKey]: { ...prev[projectKey], gid: e.target.value }
+                      }))}
+                    />
+                    <p style={{
+                      fontSize: '12px',
+                      color: '#9ca3af',
+                      marginTop: '4px'
+                    }}>
+                      Find this in the URL when viewing the specific tab: #gid=123456789
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
             
-            <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-600 mt-6">
-              <h4 className="font-semibold mb-2">💡 Quick Setup Guide:</h4>
-              <div className="text-sm space-y-2 text-gray-300">
+            <div style={{
+              backgroundColor: 'rgba(30, 58, 138, 0.3)',
+              padding: '16px',
+              borderRadius: '8px',
+              border: '1px solid #2563eb',
+              marginBottom: '24px'
+            }}>
+              <h4 style={{
+                fontWeight: '600',
+                marginBottom: '8px'
+              }}>💡 Quick Setup Guide:</h4>
+              <div style={{
+                fontSize: '14px',
+                color: '#d1d5db',
+                lineHeight: '1.5'
+              }}>
                 <p><strong>1. Share your Google Sheet:</strong> File → Share → Anyone with link can view</p>
                 <p><strong>2. Copy the URL:</strong> Your browser's address bar when viewing the sheet</p>
                 <p><strong>3. Find GID:</strong> Each tab has #gid=NUMBERS at the end of URL</p>
@@ -624,17 +831,39 @@ useEffect(() => {
               </div>
             </div>
             
-            <div className="flex gap-4 mt-6">
+            <div style={{
+              display: 'flex',
+              gap: '16px'
+            }}>
               <button 
                 onClick={saveConfig}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                style={{
+                  flex: 1,
+                  backgroundColor: '#2563eb',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
               >
-                <Save className="w-4 h-4" />
+                <Save style={{ width: '16px', height: '16px' }} />
                 Save Configuration
               </button>
               <button 
                 onClick={resetConfig}
-                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
               >
                 Cancel
               </button>
@@ -644,358 +873,115 @@ useEffect(() => {
       )}
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '24px'
+        }}>
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 style={{
+              fontSize: '36px',
+              fontWeight: 'bold',
+              background: 'linear-gradient(to right, #60a5fa, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
               Multi-Project Creative Analytics Dashboard
             </h1>
-            <div className="flex items-center gap-4 mt-2">
-              <p className="text-gray-400">
-                📅 Latest date: <span className="font-semibold text-white">{dashboardData.latestDate}</span> | 
-                📊 {stats.totalCreatives} creatives | 
-                🏢 {stats.totalAccounts} accounts |
-                📋 {stats.accountColumns} data columns
-              </p>
-              
-              {/* Quick project switchers */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setProjectFilter('all')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    projectFilter === 'all' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  📊 All Projects
-                </button>
-                {Object.entries(config).map(([projectKey, project]) => (
-                  <button
-                    key={projectKey}
-                    onClick={() => setProjectFilter(projectKey)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                      projectFilter === projectKey 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    }`}
-                  >
-                    {project.emoji} {project.name} ({dashboardData.projectStats[projectKey]?.activeCreatives || 0})
-                  </button>
-                ))}
-              </div>
-            </div>
+            <p style={{
+              color: '#9ca3af',
+              marginTop: '8px'
+            }}>
+              📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
+              📊 {stats.totalCreatives} creatives | 
+              🏢 {stats.totalAccounts} accounts |
+              📋 {stats.accountColumns} data columns
+            </p>
             {lastUpdate && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p style={{
+                fontSize: '12px',
+                color: '#6b7280',
+                marginTop: '4px'
+              }}>
                 🔄 Last update: {lastUpdate}
               </p>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
             <button 
               onClick={() => setShowConfig(true)}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              style={{
+                backgroundColor: '#6b7280',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
-              <Settings className="w-4 h-4" />
+              <Settings style={{ width: '16px', height: '16px' }} />
               Configure
             </button>
-            <div className="text-right">
-              <div className="text-sm text-gray-400">Google Sheets sync</div>
-              <div className="text-lg font-semibold text-green-400">
+            <div style={{ textAlign: 'right' }}>
+              <div style={{
+                fontSize: '14px',
+                color: '#9ca3af'
+              }}>Google Sheets sync</div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#10b981'
+              }}>
                 {loading ? 'Updating...' : '✓ Connected'}
               </div>
             </div>
             <button 
               onClick={loadData}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              style={{
+                backgroundColor: loading ? '#6b7280' : '#2563eb',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw style={{ 
+                width: '16px', 
+                height: '16px',
+                animation: loading ? 'spin 1s linear infinite' : 'none'
+              }} />
               Refresh
             </button>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm">🟢 Active</p>
-                <p className="text-3xl font-bold">
-                  {projectFilter === 'all' ? stats.activeCreatives : 
-                   dashboardData.projectStats[projectFilter]?.activeCreatives || 0}
-                </p>
-                <p className="text-green-200 text-xs mt-1">
-                  {Math.round((
-                    (projectFilter === 'all' ? stats.activeCreatives : 
-                     dashboardData.projectStats[projectFilter]?.activeCreatives || 0) / 
-                    (projectFilter === 'all' ? stats.totalCreatives :
-                     dashboardData.projectStats[projectFilter]?.totalCreatives || 1)
-                  ) * 100)}% of all
-                </p>
-              </div>
-              <Play className="w-8 h-8 text-green-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-gray-600 to-gray-700 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-100 text-sm">⚪ Free</p>
-                <p className="text-3xl font-bold">
-                  {projectFilter === 'all' ? stats.freeCreatives : 
-                   ((dashboardData.projectStats[projectFilter]?.totalCreatives || 0) - (dashboardData.projectStats[projectFilter]?.activeCreatives || 0))}
-                </p>
-              </div>
-              <Pause className="w-8 h-8 text-gray-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm">👥 Today</p>
-                <p className="text-2xl font-bold">
-                  {projectFilter === 'all' ? stats.totalCurrentUsers.toLocaleString() : 
-                   (dashboardData.projectStats[projectFilter]?.currentUsers || 0).toLocaleString()}
-                </p>
-                <p className="text-blue-200 text-xs mt-1">active users</p>
-              </div>
-              <Users className="w-8 h-8 text-blue-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm">📈 All time</p>
-                <p className="text-2xl font-bold">
-                  {projectFilter === 'all' ? stats.totalUsersAllTime.toLocaleString() : 
-                   (dashboardData.projectStats[projectFilter]?.totalUsers || 0).toLocaleString()}
-                </p>
-                <p className="text-purple-200 text-xs mt-1">total users</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-purple-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-yellow-600 to-orange-600 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-yellow-100 text-sm">🎯 Accounts</p>
-                <p className="text-3xl font-bold">
-                  {projectFilter === 'all' ? stats.totalAccounts : 
-                   dashboardData.projectStats[projectFilter]?.totalAccounts || 0}
-                </p>
-                <p className="text-yellow-200 text-xs mt-1">active</p>
-              </div>
-              <Target className="w-8 h-8 text-yellow-200" />
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 p-6 rounded-xl shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-indigo-100 text-sm">📊 Total creatives</p>
-                <p className="text-3xl font-bold">
-                  {projectFilter === 'all' ? stats.totalCreatives : 
-                   dashboardData.projectStats[projectFilter]?.totalCreatives || 0}
-                </p>
-                <p className="text-indigo-200 text-xs mt-1">in project</p>
-              </div>
-              <Eye className="w-8 h-8 text-indigo-200" />
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search creatives..."
-                className="w-full bg-gray-700 text-white pl-10 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <select 
-              className="bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={projectFilter}
-              onChange={(e) => setProjectFilter(e.target.value)}
-            >
-              <option value="all">🎯 All Projects</option>
-              {Object.entries(config).map(([projectKey, project]) => (
-                <option key={projectKey} value={projectKey}>
-                  {project.emoji} {project.name} ({dashboardData.projectStats[projectKey]?.totalCreatives || 0})
-                </option>
-              ))}
-            </select>
-
-            <select 
-              className="bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">📋 All statuses</option>
-              <option value="active">🟢 Active ({
-                projectFilter === 'all' ? stats.activeCreatives : 
-                dashboardData.projectStats[projectFilter]?.activeCreatives || 0
-              })</option>
-              <option value="free">⚪ Free</option>
-            </select>
-
-            <select 
-              className="bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={accountFilter}
-              onChange={(e) => setAccountFilter(e.target.value)}
-            >
-              <option value="all">🏢 All accounts</option>
-              {dashboardData.allAccounts.map(account => (
-                <option key={account} value={account}>
-                  {account.length > 20 ? account.substring(0, 20) + '...' : account}
-                </option>
-              ))}
-            </select>
-
-            <select 
-              className="bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={performanceFilter}
-              onChange={(e) => setPerformanceFilter(e.target.value)}
-            >
-              <option value="all">📊 All performance</option>
-              <option value="high">🔥 High (200+ users)</option>
-              <option value="medium">📈 Medium (50-200 or new)</option>
-              <option value="low">📉 Low (3+ accounts, &lt;2/day)</option>
-            </select>
-
-            <div className="bg-gray-700 px-4 py-3 rounded-lg text-gray-300 text-sm flex items-center">
-              <Filter className="w-4 h-4 mr-2" />
-              Showing: {filteredCreatives.length}
-            </div>
-          </div>
+        {/* Basic Dashboard Content - Simplified for testing */}
+        <div style={{
+          backgroundColor: '#374151',
+          padding: '24px',
+          borderRadius: '12px'
+        }}>
+          <h2>Dashboard Content</h2>
+          <p>Active Creatives: {stats.activeCreatives}</p>
+          <p>Total Users: {stats.totalCurrentUsers}</p>
+          <p>Total Accounts: {stats.totalAccounts}</p>
         </div>
       </div>
-
-      {/* Creatives Table */}
-      <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-700">
-              <tr>
-                <th className="text-left p-4 font-semibold">Status</th>
-                <th className="text-left p-4 font-semibold">Project</th>
-                <th className="text-left p-4 font-semibold">Creative</th>
-                <th className="text-left p-4 font-semibold">Current Users</th>
-                <th className="text-left p-4 font-semibold">Total All Time</th>
-                <th className="text-left p-4 font-semibold">Current Accounts</th>
-                <th className="text-left p-4 font-semibold">📅 Days Active</th>
-                <th className="text-left p-4 font-semibold">📊 Avg/day</th>
-                <th className="text-left p-4 font-semibold">🏢 Total Accounts</th>
-                <th className="text-left p-4 font-semibold">📈 Performance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCreatives.map((creative, index) => {
-                const isActive = creative.status === 'active';
-                const performanceColor = creative.performance === 'high' ? 'text-green-400' : 
-                                       creative.performance === 'medium' ? 'text-yellow-400' : 'text-red-400';
-                const projectConfig = config[creative.project] || { name: creative.project, emoji: '📊' };
-                
-                return (
-                  <tr 
-                    key={creative.id} 
-                    className={`border-t border-gray-700 hover:bg-gray-750 transition-colors ${
-                      index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-825'
-                    }`}
-                  >
-                    <td className="p-4">
-                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium w-fit ${
-                        isActive 
-                          ? 'bg-green-900 text-green-300 border border-green-600' 
-                          : 'bg-gray-600 text-gray-300 border border-gray-500'
-                      }`}>
-                        {isActive ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
-                        {isActive ? 'Active' : 'Free'}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="px-3 py-1 rounded-full text-sm font-medium w-fit bg-blue-900 text-blue-300 border border-blue-600">
-                        {projectConfig.emoji} {projectConfig.name}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-medium">
-                        <div className="text-white font-mono">{creative.creative}</div>
-                        <div className="text-sm text-gray-400">
-                          {creative.creative.includes('.mp4') ? '🎥 Video' : '🎨 Creative'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {isActive ? (
-                        <div className={`font-mono text-lg font-bold ${creative.currentUsers > 5 ? 'text-green-400' : creative.currentUsers > 2 ? 'text-yellow-400' : 'text-gray-400'}`}>
-                          {creative.currentUsers}
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">-</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className={`font-mono ${performanceColor}`}>
-                        {creative.totalUsers.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="space-y-1">
-                        {creative.currentAccounts.slice(0, 2).map(accInfo => (
-                          <span key={accInfo.account} className="inline-block px-2 py-1 rounded text-xs mr-1 mb-1 bg-gray-600 text-gray-300">
-                            {accInfo.account.length > 10 ? accInfo.account.substring(0, 10) + '...' : accInfo.account} ({accInfo.users})
-                          </span>
-                        ))}
-                        {creative.currentAccounts.length > 2 && (
-                          <span className="text-gray-400 text-xs">
-                            +{creative.currentAccounts.length - 2} more
-                          </span>
-                        )}
-                        {creative.currentAccounts.length === 0 && (
-                          <span className="text-gray-500 text-sm">Not active</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 font-mono">{creative.daysActive}</td>
-                    <td className="p-4 font-mono">{creative.avgUsersPerDay}</td>
-                    <td className="p-4 font-mono">{creative.accounts.length}</td>
-                    <td className="p-4">
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${
-                        creative.performance === 'high' ? 'bg-green-900 text-green-300' :
-                        creative.performance === 'medium' ? 'bg-yellow-900 text-yellow-300' :
-                        'bg-red-900 text-red-300'
-                      }`}>
-                        {creative.performance === 'high' ? '🔥 High' :
-                         creative.performance === 'medium' ? '📈 Medium' :
-                         '📉 Low'}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {filteredCreatives.length === 0 && (
-        <div className="text-center py-12">
-          <Eye className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">No creatives found</p>
-          <p className="text-gray-500 text-sm">Try changing your search filters</p>
-        </div>
-      )}
     </div>
   );
 }
