@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
+// ИСПРАВЛЕНО: Удалены неиспользуемые иконки
+import { RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [accountFilter, setAccountFilter] = useState('all');
-  const [performanceFilter, setPerformanceFilter] = useState('all');
-  const [projectFilter, setProjectFilter] = useState('all');
-
+  // ИСПРАВЛЕНО: Полностью удалены состояния для фильтров, так как они не использовались
+  
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -58,6 +55,8 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
+    // Перезагружаем данные после сохранения новой конфигурации
+    setTimeout(loadData, 100);
   };
 
   const resetConfig = () => {
@@ -282,20 +281,17 @@ function App() {
       
       console.log('📄 Starting multi-project data load from Google Sheets...');
       
-      // Load data from configured sheets
       const projectPromises = Object.entries(GOOGLE_SHEETS_URLS).map(([project, url]) =>
         loadSheetData(project, url)
       );
       
       const projectData = await Promise.all(projectPromises);
       
-      // Process each sheet's data
       const processedProjects = {};
       Object.keys(GOOGLE_SHEETS_URLS).forEach((project, index) => {
         processedProjects[project] = processSheetData(projectData[index], project);
       });
       
-      // Combine data from all projects
       const allUniqueCreatives = new Set();
       const allCreativeHistory = {};
       const allAccounts = [];
@@ -308,13 +304,12 @@ function App() {
         allActiveCreatives.push(...processed.activeCreativesOnLastDate);
       });
       
-      // Use the latest date from any project
       const combinedLatestDate = Object.values(processedProjects)
         .map(p => p.latestDate)
+        .filter(Boolean)
         .sort()
         .reverse()[0];
 
-      // Create final analytics with project information
       const creativeAnalytics = [...allUniqueCreatives].map(creative => {
         const history = allCreativeHistory[creative];
         const isActive = allActiveCreatives.some(item => item.creative === creative);
@@ -331,7 +326,6 @@ function App() {
           ? allActiveCreatives.filter(item => item.creative === creative).reduce((sum, item) => sum + item.users, 0)
           : 0;
 
-        // Determine performance
         let performance;
         if (history.totalUsers > 200) {
           performance = 'high';
@@ -363,16 +357,15 @@ function App() {
         };
       });
 
-      // Sort creatives
       creativeAnalytics.sort((a, b) => {
         if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
         if (a.status === 'active') return b.currentUsers - a.currentUsers;
         return b.totalUsers - a.totalUsers;
       });
 
-      // Calculate project statistics
       const projectStats = {};
       Object.keys(config).forEach(projectKey => {
+        if (!processedProjects[projectKey]) return;
         const projectCreatives = creativeAnalytics.filter(c => c.project === projectKey);
         const projectActiveCreatives = allActiveCreatives.filter(item => item.project === projectKey);
         
@@ -391,18 +384,18 @@ function App() {
       setDashboardData({
         latestDate: combinedLatestDate,
         creativeAnalytics: creativeAnalytics,
-        allAccounts: allAccounts,
+        allAccounts: [...new Set(allAccounts)],
         activeCreativesOnLastDate: allActiveCreatives,
         projectStats: projectStats,
         summary: {
           totalCreatives: allUniqueCreatives.size,
           activeCreatives: activeCount,
           freeCreatives: allUniqueCreatives.size - activeCount,
-          totalAccounts: allAccounts.length,
-          accountColumns: Object.values(processedProjects).reduce((sum, p) => sum + p.accountColumns, 0),
+          totalAccounts: new Set(allAccounts).size,
+          accountColumns: Object.values(processedProjects).reduce((sum, p) => sum + (p.accountColumns || 0), 0),
           totalUsersAllTime: creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0),
           totalCurrentUsers: totalCurrentUsers,
-          avgUsersPerCreative: Math.round((creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0) / allUniqueCreatives.size) * 10) / 10
+          avgUsersPerCreative: allUniqueCreatives.size > 0 ? Math.round((creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0) / allUniqueCreatives.size) * 10) / 10 : 0
         }
       });
 
@@ -433,31 +426,13 @@ function App() {
     if (isConfigured) {
       loadData();
       
-      // Auto-refresh every 5 minutes
       const interval = setInterval(loadData, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filter data with project support
-  const filteredCreatives = useMemo(() => {
-    if (!dashboardData) return [];
-    
-    return dashboardData.creativeAnalytics.filter(creative => {
-      const matchesSearch = creative.creative.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          creative.accounts.some(account => account.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesStatus = statusFilter === 'all' || creative.status === statusFilter;
-      const matchesAccount = accountFilter === 'all' || 
-                            creative.accounts.includes(accountFilter) || 
-                            creative.currentAccounts.some(acc => acc.account === accountFilter);
-      const matchesPerformance = performanceFilter === 'all' || creative.performance === performanceFilter;
-      const matchesProject = projectFilter === 'all' || creative.project === projectFilter;
-      
-      return matchesSearch && matchesStatus && matchesAccount && matchesPerformance && matchesProject;
-    });
-  }, [dashboardData, searchTerm, statusFilter, accountFilter, performanceFilter, projectFilter]);
-
-  // Show configuration screen if not configured
+  // ИСПРАВЛЕНО: Полностью удален блок useMemo для filteredCreatives, так как он не использовался
+  
   if (!isConfigured && !showConfig) {
     return (
       <div style={{
@@ -648,9 +623,6 @@ function App() {
     );
   }
 
-  // =================================================================
-  // START: ИСПРАВЛЕННЫЙ БЛОК
-  // =================================================================
   return (
     <div style={{
       minHeight: '100vh',
@@ -658,7 +630,6 @@ function App() {
       color: 'white',
       padding: '24px'
     }}>
-      {/* Модальное окно конфигурации. Его рендеринг зависит только от showConfig */}
       {showConfig && (
         <div style={{
           position: 'fixed',
@@ -871,15 +842,12 @@ function App() {
         </div>
       )}
 
-      {/* Контент дашборда - отображается только если dashboardData существует */}
       {dashboardData && (
         <>
           {(() => {
-            // Объявляем stats внутри, чтобы избежать ошибок
             const stats = dashboardData.summary;
             return (
               <div style={{ marginBottom: '32px' }}>
-                {/* Header */}
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -976,7 +944,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Basic Dashboard Content */}
                 <div style={{
                   backgroundColor: '#374151',
                   padding: '24px',
@@ -994,9 +961,6 @@ function App() {
       )}
     </div>
   );
-  // =================================================================
-  // END: ИСПРАВЛЕННЫЙ БЛОК
-  // =================================================================
 }
 
 export default App;
