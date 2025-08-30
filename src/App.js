@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
+import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
+  // Состояния для фильтров
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [accountFilter, setAccountFilter] = useState('all');
+  const [performanceFilter, setPerformanceFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState('all');
+
+  // Основные состояния приложения
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [showConfig, setShowConfig] = useState(false);
 
+  // Состояние конфигурации
   const [config, setConfig] = useState(() => {
     const saved = localStorage.getItem('dashboardConfig');
     if (saved) {
@@ -39,7 +48,8 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
-    setTimeout(() => loadData(), 100);
+    // Небольшая задержка, чтобы дать состоянию обновиться перед загрузкой
+    setTimeout(() => loadData(), 100); 
   };
 
   const resetConfig = () => {
@@ -63,10 +73,15 @@ function App() {
 
   const loadSheetData = async (project, url) => {
     const response = await fetch(url + '&timestamp=' + Date.now());
-    if (!response.ok) throw new Error(`HTTP error for ${project}: ${response.status}`);
+    if (!response.ok) {
+        let errorMessage = `HTTP ошибка для ${project}: ${response.status}`;
+        if (response.status === 403) errorMessage = `Доступ к таблице ${project} запрещен. Убедитесь, что она опубликована для чтения.`;
+        if (response.status === 404) errorMessage = `Таблица ${project} не найдена. Проверьте ID таблицы и GID листа.`;
+        throw new Error(errorMessage);
+    }
     const csvData = await response.text();
     if (!csvData || csvData.trim().startsWith("<!DOCTYPE html>")) {
-      throw new Error(`Received invalid data for ${project} (likely HTML page)`);
+      throw new Error(`Получены неверные данные для ${project} (вероятно, страница входа Google)`);
     }
     return csvData;
   };
@@ -85,7 +100,7 @@ function App() {
     }).filter(row => row.Date);
 
     const accountColumns = headers.filter(h => h.startsWith('Account_')).length;
-    if (accountColumns === 0) throw new Error(`No account columns found for ${project}`);
+    if (accountColumns === 0) throw new Error(`Не найдены колонки аккаунтов (Account_X) для проекта ${project}`);
 
     const creativeHistory = {};
     const accounts = new Set();
@@ -112,7 +127,7 @@ function App() {
       ch.avgUsersPerDay = ch.daysActive > 0 ? Math.round(ch.totalUsers / ch.daysActive * 10) / 10 : 0;
     });
 
-    const latestDate = data[data.length - 1]?.Date;
+    const latestDate = data.length > 0 ? data[data.length - 1].Date : null;
     const lastDateRow = data.find(row => row.Date === latestDate);
     const activeCreativesOnLastDate = [];
     if (lastDateRow) {
@@ -211,7 +226,7 @@ function App() {
       });
       setLastUpdate(new Date().toLocaleString('ru-RU'));
     } catch (err) {
-      console.error('❌ Critical loading error:', err);
+      console.error('❌ Критическая ошибка загрузки:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -221,10 +236,27 @@ function App() {
   useEffect(() => {
     if (isConfigured) {
       loadData();
-      const interval = setInterval(loadData, 12 * 60 * 60 * 1000);
+      const interval = setInterval(loadData, 5 * 60 * 1000); // Обновление каждые 5 минут
       return () => clearInterval(interval);
     }
   }, [isConfigured, loadData]);
+
+  const filteredCreatives = useMemo(() => {
+    if (!dashboardData) return [];
+    
+    return dashboardData.creativeAnalytics.filter(creative => {
+      const matchesSearch = creative.creative.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            creative.accounts.some(account => account.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesStatus = statusFilter === 'all' || creative.status === statusFilter;
+      const matchesAccount = accountFilter === 'all' || 
+                             creative.accounts.includes(accountFilter) ||
+                             creative.currentAccounts.some(acc => acc.account === accountFilter);
+      const matchesPerformance = performanceFilter === 'all' || creative.performance === performanceFilter;
+      const matchesProject = projectFilter === 'all' || creative.project === projectFilter;
+      
+      return matchesSearch && matchesStatus && matchesAccount && matchesPerformance && matchesProject;
+    });
+  }, [dashboardData, searchTerm, statusFilter, accountFilter, performanceFilter, projectFilter]);
 
   if (!isConfigured && !showConfig) {
     return (
@@ -244,10 +276,6 @@ function App() {
                 <li>3. Скопируйте URL таблицы и найдите GID каждой вкладки</li>
                 <li>4. Настройте ваши проекты ниже</li>
               </ol>
-              <div style={{marginTop: '12px', padding: '12px', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderRadius: '6px', border: '1px solid #22c55e'}}>
-                <p style={{fontSize: '14px', color: '#22c55e', marginBottom: '8px', fontWeight: '500'}}>📖 Подробная инструкция:</p>
-                <a href="https://docs.google.com/document/d/19d3df8PlQHD735yJjiVV9HhPWxP71NKnzIN84dn8LSg/edit?usp=sharing" target="_blank" rel="noopener noreferrer" style={{color: '#22c55e', fontSize: '14px', textDecoration: 'underline'}}>Открыть полное руководство по настройке →</a>
-              </div>
             </div>
             <button onClick={() => setShowConfig(true)} style={{width: '100%', backgroundColor: '#2563eb', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
               <Settings style={{width: '16px', height: '16px'}} />
@@ -274,10 +302,10 @@ function App() {
   if (error) {
     return (
       <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div style={{textAlign: 'center'}}>
+        <div style={{backgroundColor: '#374151', padding: '32px', borderRadius: '12px', textAlign: 'center', maxWidth: '500px', width: '100%'}}>
           <AlertCircle style={{width: '64px', height: '64px', color: '#f87171', margin: '0 auto 16px auto'}} />
-          <p style={{fontSize: '20px', color: '#f87171'}}>Ошибка подключения</p>
-          <p style={{color: '#9ca3af', marginBottom: '16px'}}>{error}</p>
+          <p style={{fontSize: '20px', color: '#f87171', fontWeight: 'bold'}}>Ошибка подключения</p>
+          <p style={{color: '#e5e7eb', backgroundColor: '#4b5563', padding: '12px', borderRadius: '8px', marginTop: '8px', marginBottom: '24px', fontFamily: 'monospace', fontSize: '14px', textAlign: 'left'}}>{error}</p>
           <div style={{display: 'flex', gap: '16px', justifyContent: 'center'}}>
             <button onClick={loadData} style={{backgroundColor: '#2563eb', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'}}>
               <RefreshCw style={{width: '16px', height: '16px'}} />
@@ -293,12 +321,8 @@ function App() {
     );
   }
 
-  // ====================================================================
-  // НАЧАЛО ИСПРАВЛЕННОГО БЛОКА
-  // ====================================================================
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)', color: 'white', padding: '24px'}}>
-      {/* Модальное окно настроек будет отображаться всегда, когда showConfig === true */}
       {showConfig && (
         <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px'}}>
           <div style={{backgroundColor: '#374151', borderRadius: '12px', padding: '24px', maxWidth: '896px', width: '100%', maxHeight: '90vh', overflowY: 'auto'}}>
@@ -339,32 +363,130 @@ function App() {
         </div>
       )}
 
-      {/* Дашборд будет отображаться только если есть данные и модальное окно закрыто */}
       {dashboardData && !showConfig && (
         <>
-          <div style={{marginBottom: '32px'}}>
-            <div>
-              <h1 style={{fontSize: '36px', fontWeight: 'bold', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'}}>Multi-Project Creative Analytics Dashboard</h1>
-              <p style={{color: '#9ca3af', marginTop: '8px'}}>
-                📅 Последняя дата: <span style={{fontWeight: '600', color: 'white'}}>{dashboardData.latestDate}</span> | 📊 {dashboardData.summary.totalCreatives} креативов | 🏢 {dashboardData.summary.totalAccounts} аккаунтов
-              </p>
-              {lastUpdate && <p style={{fontSize: '12px', color: '#6b7280', marginTop: '4px'}}>🔄 Последнее обновление: {lastUpdate}</p>}
+          {/* Header */}
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '36px', fontWeight: 'bold', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  Multi-Project Creative Analytics
+                </h1>
+                <p style={{ color: '#9ca3af', marginTop: '8px' }}>
+                  📅 Последняя дата: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 📊 {dashboardData.summary.totalCreatives} креативов | 🏢 {dashboardData.summary.totalAccounts} аккаунтов
+                </p>
+                {lastUpdate && <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>🔄 Последнее обновление: {lastUpdate}</p>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <button onClick={() => setShowConfig(true)} style={{ backgroundColor: '#6b7280', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings style={{ width: '16px', height: '16px' }} />
+                  Настройки
+                </button>
+                <button onClick={loadData} disabled={loading} style={{ backgroundColor: loading ? '#6b7280' : '#2563eb', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <RefreshCw style={{ width: '16px', height: '16px', animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+                  Обновить
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+            <div style={{ background: 'linear-gradient(to right, #059669, #047857)', padding: '24px', borderRadius: '12px' }}>
+                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>🟢 Активные</p>
+                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.activeCreatives}</p>
+            </div>
+            <div style={{ background: 'linear-gradient(to right, #6b7280, #4b5563)', padding: '24px', borderRadius: '12px' }}>
+                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>⚪ Свободные</p>
+                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.freeCreatives}</p>
+            </div>
+            <div style={{ background: 'linear-gradient(to right, #2563eb, #1d4ed8)', padding: '24px', borderRadius: '12px' }}>
+                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>👥 Пользователей сегодня</p>
+                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalCurrentUsers.toLocaleString()}</p>
+            </div>
+            <div style={{ background: 'linear-gradient(to right, #7c3aed, #6d28d9)', padding: '24px', borderRadius: '12px' }}>
+                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>📈 Пользователей всего</p>
+                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalUsersAllTime.toLocaleString()}</p>
             </div>
           </div>
           
-          <div style={{backgroundColor: '#374151', padding: '24px', borderRadius: '12px'}}>
-            <h2>Dashboard Content</h2>
-            <p>Active Creatives: {dashboardData.summary.activeCreatives}</p>
-            <p>Total Users: {dashboardData.summary.totalCurrentUsers}</p>
-            <p>Total Accounts: {dashboardData.summary.totalAccounts}</p>
+          {/* Filters */}
+          <div style={{ backgroundColor: '#374151', padding: '24px', borderRadius: '12px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+              <div style={{ position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: '12px', top: '12px', width: '20px', height: '20px', color: '#9ca3af' }} />
+                <input type="text" placeholder="Поиск по креативу или аккаунту..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', backgroundColor: '#4b5563', color: 'white', paddingLeft: '40px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px', borderRadius: '8px', border: 'none', boxSizing: 'border-box' }}/>
+              </div>
+              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+                <option value="all">🎯 Все проекты</option>
+                {Object.entries(config).map(([key, proj]) => <option key={key} value={key}>{proj.emoji} {proj.name}</option>)}
+              </select>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+                <option value="all">📋 Все статусы</option>
+                <option value="active">🟢 Активные</option>
+                <option value="free">⚪ Свободные</option>
+              </select>
+              <select value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+                <option value="all">🏢 Все аккаунты</option>
+                {dashboardData.allAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
+              </select>
+              <select value={performanceFilter} onChange={(e) => setPerformanceFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+                <option value="all">📊 Вся производительность</option>
+                <option value="high">🔥 Высокая</option>
+                <option value="medium">📈 Средняя</option>
+                <option value="low">📉 Низкая</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div style={{ backgroundColor: '#374151', borderRadius: '12px', overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead style={{ backgroundColor: '#4b5563' }}>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Статус</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Проект</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Креатив</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Польз. сейчас</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Польз. всего</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Текущие аккаунты</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Дней активно</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Сред./день</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCreatives.map((creative, index) => (
+                    <tr key={creative.id} style={{ borderTop: '1px solid #4b5563', backgroundColor: index % 2 === 0 ? '#374151' : '#475569' }}>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '14px', backgroundColor: creative.status === 'active' ? '#065f46' : '#4b5563', color: creative.status === 'active' ? '#10b981' : '#d1d5db' }}>
+                          {creative.status === 'active' ? 'Активен' : 'Свободен'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px' }}>{config[creative.project]?.emoji} {config[creative.project]?.name}</td>
+                      <td style={{ padding: '16px', fontFamily: 'monospace' }}>{creative.creative}</td>
+                      <td style={{ padding: '16px', fontWeight: 'bold', color: creative.currentUsers > 0 ? '#60a5fa' : '#9ca3af' }}>{creative.currentUsers}</td>
+                      <td style={{ padding: '16px' }}>{creative.totalUsers}</td>
+                      <td style={{ padding: '16px' }}>{creative.currentAccounts.map(ca => ca.account).join(', ')}</td>
+                      <td style={{ padding: '16px' }}>{creative.daysActive}</td>
+                      <td style={{ padding: '16px' }}>{creative.avgUsersPerDay}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+             {filteredCreatives.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
+                    <Eye style={{ width: '48px', height: '48px', margin: '0 auto 16px auto', color: '#6b7280' }}/>
+                    <p style={{fontSize: '18px'}}>Креативы не найдены</p>
+                    <p style={{fontSize: '14px', color: '#6b7280'}}>Попробуйте изменить фильтры поиска</p>
+                </div>
+            )}
           </div>
         </>
       )}
     </div>
   );
-  // ====================================================================
-  // КОНЕЦ ИСПРАВЛЕННОГО БЛОКА
-  // ====================================================================
 }
 
 export default App;
