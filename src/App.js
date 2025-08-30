@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-// ИСПРАВЛЕНО: Удалены неиспользуемые иконки, чтобы исправить ошибку сборки
-import { Eye, Search, RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
+// ИСПРАВЛЕНО: Возвращены иконки, необходимые для полного интерфейса
+import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
   // Состояния для фильтров
@@ -49,7 +49,6 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
-    // Небольшая задержка, чтобы дать состоянию обновиться перед загрузкой
     setTimeout(() => loadData(), 100); 
   };
 
@@ -58,6 +57,27 @@ function App() {
     setShowConfig(false);
   };
   
+  // ДОБАВЛЕНО: Функционал для добавления и удаления проектов в настройках
+  const addProject = () => {
+    const newProjectKey = `project_${Date.now()}`;
+    setTempConfig(prev => ({
+      ...prev,
+      [newProjectKey]: { name: 'New Project', emoji: '🆕', url: '', gid: '' }
+    }));
+  };
+
+  const removeProject = (projectKeyToRemove) => {
+    if (Object.keys(tempConfig).length <= 1) {
+      alert("You cannot remove the last project.");
+      return;
+    }
+    setTempConfig(prev => {
+      const newConfig = { ...prev };
+      delete newConfig[projectKeyToRemove];
+      return newConfig;
+    });
+  };
+
   const handleUrlChange = (project, value) => {
     let processedUrl = value;
     const match = value.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
@@ -325,38 +345,40 @@ function App() {
   return (
     <div style={{minHeight: '100vh', background: 'linear-gradient(135deg, #1f2937, #111827, #1f2937)', color: 'white', padding: '24px'}}>
       {showConfig && (
-        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px'}}>
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px'}}>
           <div style={{backgroundColor: '#374151', borderRadius: '12px', padding: '24px', maxWidth: '896px', width: '100%', maxHeight: '90vh', overflowY: 'auto'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px'}}>
-              <h2 style={{fontSize: '24px', fontWeight: 'bold'}}>Настройка Google Таблиц</h2>
+              <h2 style={{fontSize: '24px', fontWeight: 'bold'}}>Настройка проектов</h2>
               <button onClick={resetConfig} style={{background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer'}}>
                 <X style={{width: '24px', height: '24px'}} />
               </button>
             </div>
             <div style={{marginBottom: '24px'}}>
               {Object.entries(tempConfig).map(([projectKey, project]) => (
-                <div key={projectKey} style={{backgroundColor: '#4b5563', padding: '16px', borderRadius: '8px', marginBottom: '24px'}}>
+                <div key={projectKey} style={{backgroundColor: '#4b5563', padding: '16px', borderRadius: '8px', marginBottom: '16px', position: 'relative'}}>
+                   <button onClick={() => removeProject(projectKey)} style={{position: 'absolute', top: '12px', right: '12px', background: '#6b7280', border: 'none', color: '#e5e7eb', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <X size={16} />
+                  </button>
                   <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px'}}>
-                    <span style={{fontSize: '24px'}}>{project.emoji}</span>
-                    <input type="text" placeholder="Название проекта" style={{backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', fontWeight: '600'}} value={project.name} onChange={(e) => setTempConfig(prev => ({...prev, [projectKey]: {...prev[projectKey], name: e.target.value}}))} />
+                    <input type="text" placeholder="😀" style={{backgroundColor: '#6b7280', color: 'white', padding: '8px', borderRadius: '4px', border: 'none', fontWeight: '600', width: '40px', textAlign: 'center', fontSize: '20px'}} value={project.emoji} onChange={(e) => setTempConfig(prev => ({...prev, [projectKey]: {...prev[projectKey], emoji: e.target.value}}))} />
+                    <input type="text" placeholder="Название проекта" style={{backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', fontWeight: '600', flex: 1}} value={project.name} onChange={(e) => setTempConfig(prev => ({...prev, [projectKey]: {...prev[projectKey], name: e.target.value}}))} />
                   </div>
                   <div style={{marginBottom: '12px'}}>
-                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px'}}>URL Google Таблицы или ID таблицы:</label>
-                    <input type="text" placeholder="https://docs.google.com/spreadsheets/d/ВАШ_ID_ТАБЛИЦЫ или только ID" style={{width: '100%', backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', boxSizing: 'border-box'}} value={project.url} onChange={(e) => handleUrlChange(projectKey, e.target.value)} />
-                    <p style={{fontSize: '12px', color: '#9ca3af', marginTop: '4px'}}>Вставьте полный URL или только ID таблицы</p>
+                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px'}}>URL Google Таблицы или ID:</label>
+                    <input type="text" placeholder="https://docs.google.com/spreadsheets/d/..." style={{width: '100%', backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', boxSizing: 'border-box'}} value={project.url} onChange={(e) => handleUrlChange(projectKey, e.target.value)} />
                   </div>
                   <div>
-                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px'}}>GID вкладки (ID вкладки):</label>
-                    <input type="text" placeholder="0 (для первой вкладки) или конкретный GID" style={{width: '100%', backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', boxSizing: 'border-box'}} value={project.gid} onChange={(e) => setTempConfig(prev => ({...prev, [projectKey]: {...prev[projectKey], gid: e.target.value}}))} />
-                    <p style={{fontSize: '12px', color: '#9ca3af', marginTop: '4px'}}>Найдите в URL при просмотре конкретной вкладки: #gid=123456789</p>
+                    <label style={{display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px'}}>GID вкладки:</label>
+                    <input type="text" placeholder="0" style={{width: '100%', backgroundColor: '#6b7280', color: 'white', padding: '8px 12px', borderRadius: '4px', border: 'none', boxSizing: 'border-box'}} value={project.gid} onChange={(e) => setTempConfig(prev => ({...prev, [projectKey]: {...prev[projectKey], gid: e.target.value}}))} />
                   </div>
                 </div>
               ))}
+              <button onClick={addProject} style={{width: '100%', backgroundColor: 'rgba(34, 197, 94, 0.2)', color: '#22c55e', padding: '10px', borderRadius: '8px', border: '1px dashed #22c55e', cursor: 'pointer'}}>+ Добавить проект</button>
             </div>
             <div style={{display: 'flex', gap: '16px'}}>
               <button onClick={saveConfig} style={{flex: 1, backgroundColor: '#2563eb', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
                 <Save style={{width: '16px', height: '16px'}} />
-                Сохранить настройки
+                Сохранить и перезагрузить
               </button>
               <button onClick={resetConfig} style={{padding: '12px 24px', backgroundColor: '#6b7280', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer'}}>Отмена</button>
             </div>
@@ -379,7 +401,7 @@ function App() {
                 {lastUpdate && <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>🔄 Последнее обновление: {lastUpdate}</p>}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={() => setShowConfig(true)} style={{ backgroundColor: '#6b7280', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={() => setShowConfig(true)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Settings style={{ width: '16px', height: '16px' }} />
                   Настройки
                 </button>
@@ -392,51 +414,67 @@ function App() {
           </div>
 
           {/* Stats Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-            <div style={{ background: 'linear-gradient(to right, #059669, #047857)', padding: '24px', borderRadius: '12px' }}>
-                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>🟢 Активные</p>
-                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.activeCreatives}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+            <div style={{ background: 'linear-gradient(to right, #059669, #047857)', padding: '24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>🟢 Активные</p>
+                  <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.activeCreatives}</p>
+                </div>
+                <Play style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
-            <div style={{ background: 'linear-gradient(to right, #6b7280, #4b5563)', padding: '24px', borderRadius: '12px' }}>
-                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>⚪ Свободные</p>
-                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.freeCreatives}</p>
+            <div style={{ background: 'linear-gradient(to right, #6b7280, #4b5563)', padding: '24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>⚪ Свободные</p>
+                  <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.freeCreatives}</p>
+                </div>
+                <Pause style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
-            <div style={{ background: 'linear-gradient(to right, #2563eb, #1d4ed8)', padding: '24px', borderRadius: '12px' }}>
-                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>👥 Пользователей сегодня</p>
-                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalCurrentUsers.toLocaleString()}</p>
+            <div style={{ background: 'linear-gradient(to right, #2563eb, #1d4ed8)', padding: '24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>👥 Пользователей сегодня</p>
+                  <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalCurrentUsers.toLocaleString()}</p>
+                </div>
+                <Users style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
-            <div style={{ background: 'linear-gradient(to right, #7c3aed, #6d28d9)', padding: '24px', borderRadius: '12px' }}>
-                <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>📈 Пользователей всего</p>
-                <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalUsersAllTime.toLocaleString()}</p>
+            <div style={{ background: 'linear-gradient(to right, #7c3aed, #6d28d9)', padding: '24px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>📈 Пользователей всего</p>
+                  <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{dashboardData.summary.totalUsersAllTime.toLocaleString()}</p>
+                </div>
+                <BarChart3 style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
             </div>
           </div>
           
           {/* Filters */}
           <div style={{ backgroundColor: '#374151', padding: '24px', borderRadius: '12px', marginBottom: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'center' }}>
               <div style={{ position: 'relative' }}>
                 <Search style={{ position: 'absolute', left: '12px', top: '12px', width: '20px', height: '20px', color: '#9ca3af' }} />
                 <input type="text" placeholder="Поиск по креативу или аккаунту..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: '100%', backgroundColor: '#4b5563', color: 'white', paddingLeft: '40px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px', borderRadius: '8px', border: 'none', boxSizing: 'border-box' }}/>
               </div>
-              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+              <select value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <option value="all">🎯 Все проекты</option>
                 {Object.entries(config).map(([key, proj]) => <option key={key} value={key}>{proj.emoji} {proj.name}</option>)}
               </select>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <option value="all">📋 Все статусы</option>
                 <option value="active">🟢 Активные</option>
                 <option value="free">⚪ Свободные</option>
               </select>
-              <select value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+              <select value={accountFilter} onChange={(e) => setAccountFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <option value="all">🏢 Все аккаунты</option>
                 {dashboardData.allAccounts.map(acc => <option key={acc} value={acc}>{acc}</option>)}
               </select>
-              <select value={performanceFilter} onChange={(e) => setPerformanceFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none' }}>
+              <select value={performanceFilter} onChange={(e) => setPerformanceFilter(e.target.value)} style={{ backgroundColor: '#4b5563', color: 'white', padding: '12px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <option value="all">📊 Вся производительность</option>
                 <option value="high">🔥 Высокая</option>
                 <option value="medium">📈 Средняя</option>
                 <option value="low">📉 Низкая</option>
               </select>
+              <div style={{backgroundColor: '#4b5563', padding: '12px 16px', borderRadius: '8px', color: '#d1d5db', fontSize: '14px', display: 'flex', alignItems: 'center' }}>
+                  <Filter style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                  Найдено: {filteredCreatives.length}
+              </div>
             </div>
           </div>
 
@@ -454,13 +492,15 @@ function App() {
                     <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Текущие аккаунты</th>
                     <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Дней активно</th>
                     <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Сред./день</th>
+                    <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Performance</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCreatives.map((creative, index) => (
                     <tr key={creative.id} style={{ borderTop: '1px solid #4b5563', backgroundColor: index % 2 === 0 ? '#374151' : '#475569' }}>
                       <td style={{ padding: '16px' }}>
-                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '14px', backgroundColor: creative.status === 'active' ? '#065f46' : '#4b5563', color: creative.status === 'active' ? '#10b981' : '#d1d5db' }}>
+                        <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: creative.status === 'active' ? '#065f46' : '#4b5563', color: creative.status === 'active' ? '#10b981' : '#d1d5db' }}>
+                          {creative.status === 'active' ? <Play size={12}/> : <Pause size={12}/>}
                           {creative.status === 'active' ? 'Активен' : 'Свободен'}
                         </span>
                       </td>
@@ -468,9 +508,21 @@ function App() {
                       <td style={{ padding: '16px', fontFamily: 'monospace' }}>{creative.creative}</td>
                       <td style={{ padding: '16px', fontWeight: 'bold', color: creative.currentUsers > 0 ? '#60a5fa' : '#9ca3af' }}>{creative.currentUsers}</td>
                       <td style={{ padding: '16px' }}>{creative.totalUsers}</td>
-                      <td style={{ padding: '16px' }}>{creative.currentAccounts.map(ca => ca.account).join(', ')}</td>
+                      <td style={{ padding: '16px', fontSize: '12px' }}>{creative.currentAccounts.map(ca => ca.account).join(', ')}</td>
                       <td style={{ padding: '16px' }}>{creative.daysActive}</td>
                       <td style={{ padding: '16px' }}>{creative.avgUsersPerDay}</td>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          backgroundColor: creative.performance === 'high' ? '#065f46' : creative.performance === 'medium' ? '#92400e' : '#7f1d1d',
+                          color: creative.performance === 'high' ? '#10b981' : creative.performance === 'medium' ? '#fbbf24' : '#f87171'
+                        }}>
+                           {creative.performance === 'high' ? '🔥 High' : creative.performance === 'medium' ? '📈 Medium' : '📉 Low'}
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
