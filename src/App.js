@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-// ИСПРАВЛЕНО: Удалены неиспользуемые иконки
 import { RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
-  // ИСПРАВЛЕНО: Полностью удалены состояния для фильтров, так как они не использовались
-  
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -45,6 +42,7 @@ function App() {
     const urls = {};
     Object.entries(config).forEach(([key, project]) => {
       if (project.url && project.gid !== '') {
+        // Теперь эта логика будет работать правильно, так как project.url всегда чистый
         urls[key] = `${project.url}/export?format=csv&gid=${project.gid}`;
       }
     });
@@ -55,8 +53,10 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
-    // Перезагружаем данные после сохранения новой конфигурации
-    setTimeout(loadData, 100);
+    // Небольшая задержка перед загрузкой, чтобы React успел обновить config
+    setTimeout(() => {
+        loadData();
+    }, 100);
   };
 
   const resetConfig = () => {
@@ -64,23 +64,34 @@ function App() {
     setShowConfig(false);
   };
 
-  // Auto-complete base URL when spreadsheet ID is detected
+  // =================================================================
+  // START: ИСПРАВЛЕННАЯ ФУНКЦИЯ
+  // =================================================================
   const handleUrlChange = (project, value) => {
-    let processedValue = value;
+    let processedUrl = value;
     
-    // If it looks like just a spreadsheet ID, build the full URL
-    if (value && !value.includes('docs.google.com') && value.length > 20) {
-      processedValue = `https://docs.google.com/spreadsheets/d/${value}`;
+    // Ищем ID таблицы в строке с помощью регулярного выражения
+    const match = value.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    
+    if (match && match[1]) {
+      // Если нашли ID, формируем чистый базовый URL
+      processedUrl = `https://docs.google.com/spreadsheets/d/${match[1]}`;
+    } else if (value && !value.includes('docs.google.com') && value.length > 20) {
+      // Оставляем старую логику на случай, если вставлен только ID
+      processedUrl = `https://docs.google.com/spreadsheets/d/${value}`;
     }
     
     setTempConfig(prev => ({
       ...prev,
       [project]: {
         ...prev[project],
-        url: processedValue
+        url: processedUrl
       }
     }));
   };
+  // =================================================================
+  // END: ИСПРАВЛЕННАЯ ФУНКЦИЯ
+  // =================================================================
 
   // Function to fetch data from a specific sheet
   const loadSheetData = async (project, url) => {
@@ -113,8 +124,8 @@ function App() {
         
         csvData = await response.text();
         
-        if (!csvData || csvData.trim().length < 50) {
-          throw new Error('Received empty or too short data');
+        if (!csvData || csvData.trim().length < 50 || csvData.trim().startsWith("<!DOCTYPE html>")) {
+          throw new Error('Received empty or invalid data (likely HTML page)');
         }
         
         console.log(`✅ ${project} data loaded successfully!`);
@@ -271,7 +282,8 @@ function App() {
 
   const loadData = async () => {
     if (!isConfigured) {
-      setError('Please configure your Google Sheets URLs first');
+      // Не устанавливаем ошибку, если просто не настроено, чтобы не мешать открытию модального окна
+      // setError('Please configure your Google Sheets URLs first');
       return;
     }
 
@@ -429,9 +441,7 @@ function App() {
       const interval = setInterval(loadData, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
-  }, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ИСПРАВЛЕНО: Полностью удален блок useMemo для filteredCreatives, так как он не использовался
+  }, [isConfigured]); // eslint-disable-line react-hooks/exhaustive-deps
   
   if (!isConfigured && !showConfig) {
     return (
