@@ -648,10 +648,9 @@ function App() {
     );
   }
 
-  if (!dashboardData) return null;
-
-  const stats = dashboardData.summary;
-
+  // =================================================================
+  // START: ИСПРАВЛЕННЫЙ БЛОК
+  // =================================================================
   return (
     <div style={{
       minHeight: '100vh',
@@ -659,7 +658,7 @@ function App() {
       color: 'white',
       padding: '24px'
     }}>
-      {/* Configuration Modal */}
+      {/* Модальное окно конфигурации. Его рендеринг зависит только от showConfig */}
       {showConfig && (
         <div style={{
           position: 'fixed',
@@ -872,118 +871,132 @@ function App() {
         </div>
       )}
 
-      {/* Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '24px'
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '36px',
-              fontWeight: 'bold',
-              background: 'linear-gradient(to right, #60a5fa, #a78bfa)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>
-              Multi-Project Creative Analytics Dashboard
-            </h1>
-            <p style={{
-              color: '#9ca3af',
-              marginTop: '8px'
-            }}>
-              📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
-              📊 {stats.totalCreatives} creatives | 
-              🏢 {stats.totalAccounts} accounts |
-              📋 {stats.accountColumns} data columns
-            </p>
-            {lastUpdate && (
-              <p style={{
-                fontSize: '12px',
-                color: '#6b7280',
-                marginTop: '4px'
-              }}>
-                🔄 Last update: {lastUpdate}
-              </p>
-            )}
-          </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <button 
-              onClick={() => setShowConfig(true)}
-              style={{
-                backgroundColor: '#6b7280',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Settings style={{ width: '16px', height: '16px' }} />
-              Configure
-            </button>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{
-                fontSize: '14px',
-                color: '#9ca3af'
-              }}>Google Sheets sync</div>
-              <div style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#10b981'
-              }}>
-                {loading ? 'Updating...' : '✓ Connected'}
-              </div>
-            </div>
-            <button 
-              onClick={loadData}
-              disabled={loading}
-              style={{
-                backgroundColor: loading ? '#6b7280' : '#2563eb',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <RefreshCw style={{ 
-                width: '16px', 
-                height: '16px',
-                animation: loading ? 'spin 1s linear infinite' : 'none'
-              }} />
-              Refresh
-            </button>
-          </div>
-        </div>
+      {/* Контент дашборда - отображается только если dashboardData существует */}
+      {dashboardData && (
+        <>
+          {(() => {
+            // Объявляем stats внутри, чтобы избежать ошибок
+            const stats = dashboardData.summary;
+            return (
+              <div style={{ marginBottom: '32px' }}>
+                {/* Header */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '24px'
+                }}>
+                  <div>
+                    <h1 style={{
+                      fontSize: '36px',
+                      fontWeight: 'bold',
+                      background: 'linear-gradient(to right, #60a5fa, #a78bfa)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text'
+                    }}>
+                      Multi-Project Creative Analytics Dashboard
+                    </h1>
+                    <p style={{
+                      color: '#9ca3af',
+                      marginTop: '8px'
+                    }}>
+                      📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
+                      📊 {stats.totalCreatives} creatives | 
+                      🏢 {stats.totalAccounts} accounts |
+                      📋 {stats.accountColumns} data columns
+                    </p>
+                    {lastUpdate && (
+                      <p style={{
+                        fontSize: '12px',
+                        color: '#6b7280',
+                        marginTop: '4px'
+                      }}>
+                        🔄 Last update: {lastUpdate}
+                      </p>
+                    )}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <button 
+                      onClick={() => setShowConfig(true)}
+                      style={{
+                        backgroundColor: '#6b7280',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <Settings style={{ width: '16px', height: '16px' }} />
+                      Configure
+                    </button>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{
+                        fontSize: '14px',
+                        color: '#9ca3af'
+                      }}>Google Sheets sync</div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        color: '#10b981'
+                      }}>
+                        {loading ? 'Updating...' : '✓ Connected'}
+                      </div>
+                    </div>
+                    <button 
+                      onClick={loadData}
+                      disabled={loading}
+                      style={{
+                        backgroundColor: loading ? '#6b7280' : '#2563eb',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: loading ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <RefreshCw style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        animation: loading ? 'spin 1s linear infinite' : 'none'
+                      }} />
+                      Refresh
+                    </button>
+                  </div>
+                </div>
 
-        {/* Basic Dashboard Content - Simplified for testing */}
-        <div style={{
-          backgroundColor: '#374151',
-          padding: '24px',
-          borderRadius: '12px'
-        }}>
-          <h2>Dashboard Content</h2>
-          <p>Active Creatives: {stats.activeCreatives}</p>
-          <p>Total Users: {stats.totalCurrentUsers}</p>
-          <p>Total Accounts: {stats.totalAccounts}</p>
-        </div>
-      </div>
+                {/* Basic Dashboard Content */}
+                <div style={{
+                  backgroundColor: '#374151',
+                  padding: '24px',
+                  borderRadius: '12px'
+                }}>
+                  <h2>Dashboard Content</h2>
+                  <p>Active Creatives: {stats.activeCreatives}</p>
+                  <p>Total Users: {stats.totalCurrentUsers}</p>
+                  <p>Total Accounts: {stats.totalAccounts}</p>
+                </div>
+              </div>
+            );
+          })()}
+        </>
+      )}
     </div>
   );
+  // =================================================================
+  // END: ИСПРАВЛЕННЫЙ БЛОК
+  // =================================================================
 }
 
 export default App;
