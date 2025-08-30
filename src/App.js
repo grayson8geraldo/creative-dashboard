@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
+import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [accountFilter, setAccountFilter] = useState('all');
+  const [performanceFilter, setPerformanceFilter] = useState('all');
+  const [projectFilter, setProjectFilter] = useState('all');
+
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -42,7 +48,6 @@ function App() {
     const urls = {};
     Object.entries(config).forEach(([key, project]) => {
       if (project.url && project.gid !== '') {
-        // Теперь эта логика будет работать правильно, так как project.url всегда чистый
         urls[key] = `${project.url}/export?format=csv&gid=${project.gid}`;
       }
     });
@@ -53,10 +58,6 @@ function App() {
     setConfig(tempConfig);
     localStorage.setItem('dashboardConfig', JSON.stringify(tempConfig));
     setShowConfig(false);
-    // Небольшая задержка перед загрузкой, чтобы React успел обновить config
-    setTimeout(() => {
-        loadData();
-    }, 100);
   };
 
   const resetConfig = () => {
@@ -64,34 +65,23 @@ function App() {
     setShowConfig(false);
   };
 
-  // =================================================================
-  // START: ИСПРАВЛЕННАЯ ФУНКЦИЯ
-  // =================================================================
+  // Auto-complete base URL when spreadsheet ID is detected
   const handleUrlChange = (project, value) => {
-    let processedUrl = value;
+    let processedValue = value;
     
-    // Ищем ID таблицы в строке с помощью регулярного выражения
-    const match = value.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-    
-    if (match && match[1]) {
-      // Если нашли ID, формируем чистый базовый URL
-      processedUrl = `https://docs.google.com/spreadsheets/d/${match[1]}`;
-    } else if (value && !value.includes('docs.google.com') && value.length > 20) {
-      // Оставляем старую логику на случай, если вставлен только ID
-      processedUrl = `https://docs.google.com/spreadsheets/d/${value}`;
+    // If it looks like just a spreadsheet ID, build the full URL
+    if (value && !value.includes('docs.google.com') && value.length > 20) {
+      processedValue = `https://docs.google.com/spreadsheets/d/${value}`;
     }
     
     setTempConfig(prev => ({
       ...prev,
       [project]: {
         ...prev[project],
-        url: processedUrl
+        url: processedValue
       }
     }));
   };
-  // =================================================================
-  // END: ИСПРАВЛЕННАЯ ФУНКЦИЯ
-  // =================================================================
 
   // Function to fetch data from a specific sheet
   const loadSheetData = async (project, url) => {
@@ -124,8 +114,8 @@ function App() {
         
         csvData = await response.text();
         
-        if (!csvData || csvData.trim().length < 50 || csvData.trim().startsWith("<!DOCTYPE html>")) {
-          throw new Error('Received empty or invalid data (likely HTML page)');
+        if (!csvData || csvData.trim().length < 50) {
+          throw new Error('Received empty or too short data');
         }
         
         console.log(`✅ ${project} data loaded successfully!`);
@@ -282,8 +272,7 @@ function App() {
 
   const loadData = async () => {
     if (!isConfigured) {
-      // Не устанавливаем ошибку, если просто не настроено, чтобы не мешать открытию модального окна
-      // setError('Please configure your Google Sheets URLs first');
+      setError('Please configure your Google Sheets URLs first');
       return;
     }
 
@@ -293,17 +282,20 @@ function App() {
       
       console.log('📄 Starting multi-project data load from Google Sheets...');
       
+      // Load data from configured sheets
       const projectPromises = Object.entries(GOOGLE_SHEETS_URLS).map(([project, url]) =>
         loadSheetData(project, url)
       );
       
       const projectData = await Promise.all(projectPromises);
       
+      // Process each sheet's data
       const processedProjects = {};
       Object.keys(GOOGLE_SHEETS_URLS).forEach((project, index) => {
         processedProjects[project] = processSheetData(projectData[index], project);
       });
       
+      // Combine data from all projects
       const allUniqueCreatives = new Set();
       const allCreativeHistory = {};
       const allAccounts = [];
@@ -316,12 +308,13 @@ function App() {
         allActiveCreatives.push(...processed.activeCreativesOnLastDate);
       });
       
+      // Use the latest date from any project
       const combinedLatestDate = Object.values(processedProjects)
         .map(p => p.latestDate)
-        .filter(Boolean)
         .sort()
         .reverse()[0];
 
+      // Create final analytics with project information
       const creativeAnalytics = [...allUniqueCreatives].map(creative => {
         const history = allCreativeHistory[creative];
         const isActive = allActiveCreatives.some(item => item.creative === creative);
@@ -338,6 +331,7 @@ function App() {
           ? allActiveCreatives.filter(item => item.creative === creative).reduce((sum, item) => sum + item.users, 0)
           : 0;
 
+        // Determine performance
         let performance;
         if (history.totalUsers > 200) {
           performance = 'high';
@@ -369,15 +363,16 @@ function App() {
         };
       });
 
+      // Sort creatives
       creativeAnalytics.sort((a, b) => {
         if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
         if (a.status === 'active') return b.currentUsers - a.currentUsers;
         return b.totalUsers - a.totalUsers;
       });
 
+      // Calculate project statistics
       const projectStats = {};
       Object.keys(config).forEach(projectKey => {
-        if (!processedProjects[projectKey]) return;
         const projectCreatives = creativeAnalytics.filter(c => c.project === projectKey);
         const projectActiveCreatives = allActiveCreatives.filter(item => item.project === projectKey);
         
@@ -396,18 +391,18 @@ function App() {
       setDashboardData({
         latestDate: combinedLatestDate,
         creativeAnalytics: creativeAnalytics,
-        allAccounts: [...new Set(allAccounts)],
+        allAccounts: allAccounts,
         activeCreativesOnLastDate: allActiveCreatives,
         projectStats: projectStats,
         summary: {
           totalCreatives: allUniqueCreatives.size,
           activeCreatives: activeCount,
           freeCreatives: allUniqueCreatives.size - activeCount,
-          totalAccounts: new Set(allAccounts).size,
-          accountColumns: Object.values(processedProjects).reduce((sum, p) => sum + (p.accountColumns || 0), 0),
+          totalAccounts: allAccounts.length,
+          accountColumns: Object.values(processedProjects).reduce((sum, p) => sum + p.accountColumns, 0),
           totalUsersAllTime: creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0),
           totalCurrentUsers: totalCurrentUsers,
-          avgUsersPerCreative: allUniqueCreatives.size > 0 ? Math.round((creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0) / allUniqueCreatives.size) * 10) / 10 : 0
+          avgUsersPerCreative: Math.round((creativeAnalytics.reduce((sum, c) => sum + c.totalUsers, 0) / allUniqueCreatives.size) * 10) / 10
         }
       });
 
@@ -438,11 +433,31 @@ function App() {
     if (isConfigured) {
       loadData();
       
+      // Auto-refresh every 5 minutes
       const interval = setInterval(loadData, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
-  }, [isConfigured]); // eslint-disable-line react-hooks/exhaustive-deps
-  
+  }, [isConfigured, GOOGLE_SHEETS_URLS]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Filter data with project support
+  const filteredCreatives = useMemo(() => {
+    if (!dashboardData) return [];
+    
+    return dashboardData.creativeAnalytics.filter(creative => {
+      const matchesSearch = creative.creative.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          creative.accounts.some(account => account.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesStatus = statusFilter === 'all' || creative.status === statusFilter;
+      const matchesAccount = accountFilter === 'all' || 
+                            creative.accounts.includes(accountFilter) || 
+                            creative.currentAccounts.some(acc => acc.account === accountFilter);
+      const matchesPerformance = performanceFilter === 'all' || creative.performance === performanceFilter;
+      const matchesProject = projectFilter === 'all' || creative.project === projectFilter;
+      
+      return matchesSearch && matchesStatus && matchesAccount && matchesPerformance && matchesProject;
+    });
+  }, [dashboardData, searchTerm, statusFilter, accountFilter, performanceFilter, projectFilter]);
+
+  // Show configuration screen if not configured
   if (!isConfigured && !showConfig) {
     return (
       <div style={{
@@ -503,10 +518,7 @@ function App() {
             </div>
             
             <button 
-              onClick={() => {
-                console.log('Button clicked - opening config');
-                setShowConfig(true);
-              }}
+              onClick={() => setShowConfig(true)}
               style={{
                 width: '100%',
                 backgroundColor: '#2563eb',
@@ -519,11 +531,8 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px',
-                transition: 'background-color 0.2s'
+                gap: '8px'
               }}
-              onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-              onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
             >
               <Settings style={{ width: '16px', height: '16px' }} />
               Configure Google Sheets
@@ -633,6 +642,10 @@ function App() {
     );
   }
 
+  if (!dashboardData) return null;
+
+  const stats = dashboardData.summary;
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -640,6 +653,7 @@ function App() {
       color: 'white',
       padding: '24px'
     }}>
+      {/* Configuration Modal */}
       {showConfig && (
         <div style={{
           position: 'fixed',
@@ -852,122 +866,672 @@ function App() {
         </div>
       )}
 
-      {dashboardData && (
-        <>
-          {(() => {
-            const stats = dashboardData.summary;
-            return (
-              <div style={{ marginBottom: '32px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '24px'
-                }}>
-                  <div>
-                    <h1 style={{
-                      fontSize: '36px',
-                      fontWeight: 'bold',
-                      background: 'linear-gradient(to right, #60a5fa, #a78bfa)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text'
-                    }}>
-                      Multi-Project Creative Analytics Dashboard
-                    </h1>
-                    <p style={{
-                      color: '#9ca3af',
-                      marginTop: '8px'
-                    }}>
-                      📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
-                      📊 {stats.totalCreatives} creatives | 
-                      🏢 {stats.totalAccounts} accounts |
-                      📋 {stats.accountColumns} data columns
-                    </p>
-                    {lastUpdate && (
-                      <p style={{
-                        fontSize: '12px',
-                        color: '#6b7280',
-                        marginTop: '4px'
-                      }}>
-                        🔄 Last update: {lastUpdate}
-                      </p>
-                    )}
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px'
-                  }}>
-                    <button 
-                      onClick={() => setShowConfig(true)}
-                      style={{
-                        backgroundColor: '#6b7280',
-                        color: 'white',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <Settings style={{ width: '16px', height: '16px' }} />
-                      Configure
-                    </button>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: '14px',
-                        color: '#9ca3af'
-                      }}>Google Sheets sync</div>
-                      <div style={{
-                        fontSize: '18px',
-                        fontWeight: '600',
-                        color: '#10b981'
-                      }}>
-                        {loading ? 'Updating...' : '✓ Connected'}
-                      </div>
-                    </div>
-                    <button 
-                      onClick={loadData}
-                      disabled={loading}
-                      style={{
-                        backgroundColor: loading ? '#6b7280' : '#2563eb',
-                        color: 'white',
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}
-                    >
-                      <RefreshCw style={{ 
-                        width: '16px', 
-                        height: '16px',
-                        animation: loading ? 'spin 1s linear infinite' : 'none'
-                      }} />
-                      Refresh
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{
-                  backgroundColor: '#374151',
-                  padding: '24px',
-                  borderRadius: '12px'
-                }}>
-                  <h2>Dashboard Content</h2>
-                  <p>Active Creatives: {stats.activeCreatives}</p>
-                  <p>Total Users: {stats.totalCurrentUsers}</p>
-                  <p>Total Accounts: {stats.totalAccounts}</p>
-                </div>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '24px'
+        }}>
+          <div>
+            <h1 style={{
+              fontSize: '36px',
+              fontWeight: 'bold',
+              background: 'linear-gradient(to right, #60a5fa, #a78bfa)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Multi-Project Creative Analytics Dashboard
+            </h1>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              marginTop: '8px'
+            }}>
+              <p style={{ color: '#9ca3af' }}>
+                📅 Latest date: <span style={{ fontWeight: '600', color: 'white' }}>{dashboardData.latestDate}</span> | 
+                📊 {stats.totalCreatives} creatives | 
+                🏢 {stats.totalAccounts} accounts |
+                📋 {stats.accountColumns} data columns
+              </p>
+              
+              {/* Quick project switchers */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <button
+                  onClick={() => setProjectFilter('all')}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: projectFilter === 'all' ? '#2563eb' : '#4b5563',
+                    color: 'white'
+                  }}
+                >
+                  📊 All Projects
+                </button>
+                {Object.entries(config).map(([projectKey, project]) => (
+                  <button
+                    key={projectKey}
+                    onClick={() => setProjectFilter(projectKey)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      border: 'none',
+                      cursor: 'pointer',
+                      backgroundColor: projectFilter === projectKey ? '#059669' : '#4b5563',
+                      color: 'white'
+                    }}
+                  >
+                    {project.emoji} {project.name} ({dashboardData.projectStats[projectKey]?.activeCreatives || 0})
+                  </button>
+                ))}
               </div>
-            );
-          })()}
-        </>
+            </div>
+            {lastUpdate && (
+              <p style={{
+                fontSize: '12px',
+                color: '#6b7280',
+                marginTop: '4px'
+              }}>
+                🔄 Last update: {lastUpdate}
+              </p>
+            )}
+          </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <button 
+              onClick={() => setShowConfig(true)}
+              style={{
+                backgroundColor: '#6b7280',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Settings style={{ width: '16px', height: '16px' }} />
+              Configure
+            </button>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{
+                fontSize: '14px',
+                color: '#9ca3af'
+              }}>Google Sheets sync</div>
+              <div style={{
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#10b981'
+              }}>
+                {loading ? 'Updating...' : '✓ Connected'}
+              </div>
+            </div>
+            <button 
+              onClick={loadData}
+              disabled={loading}
+              style={{
+                backgroundColor: loading ? '#6b7280' : '#2563eb',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: 'none',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <RefreshCw style={{ 
+                width: '16px', 
+                height: '16px',
+                animation: loading ? 'spin 1s linear infinite' : 'none'
+              }} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(to right, #059669, #047857)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>🟢 Active</p>
+                <p style={{
+                  fontSize: '30px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.activeCreatives : 
+                   dashboardData.projectStats[projectFilter]?.activeCreatives || 0}
+                </p>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>
+                  {Math.round((
+                    (projectFilter === 'all' ? stats.activeCreatives : 
+                     dashboardData.projectStats[projectFilter]?.activeCreatives || 0) / 
+                    (projectFilter === 'all' ? stats.totalCreatives :
+                     dashboardData.projectStats[projectFilter]?.totalCreatives || 1)
+                  ) * 100)}% of all
+                </p>
+              </div>
+              <Play style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(to right, #6b7280, #4b5563)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>⚪ Free</p>
+                <p style={{
+                  fontSize: '30px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.freeCreatives : 
+                   ((dashboardData.projectStats[projectFilter]?.totalCreatives || 0) - (dashboardData.projectStats[projectFilter]?.activeCreatives || 0))}
+                </p>
+              </div>
+              <Pause style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(to right, #2563eb, #1d4ed8)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>👥 Today</p>
+                <p style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.totalCurrentUsers.toLocaleString() : 
+                   (dashboardData.projectStats[projectFilter]?.currentUsers || 0).toLocaleString()}
+                </p>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>active users</p>
+              </div>
+              <Users style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(to right, #7c3aed, #6d28d9)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>📈 All time</p>
+                <p style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.totalUsersAllTime.toLocaleString() : 
+                   (dashboardData.projectStats[projectFilter]?.totalUsers || 0).toLocaleString()}
+                </p>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>total users</p>
+              </div>
+              <BarChart3 style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(to right, #d97706, #b45309)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>🎯 Accounts</p>
+                <p style={{
+                  fontSize: '30px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.totalAccounts : 
+                   dashboardData.projectStats[projectFilter]?.totalAccounts || 0}
+                </p>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>active</p>
+              </div>
+              <Target style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(to right, #4f46e5, #3730a3)',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '14px'
+                }}>📊 Total creatives</p>
+                <p style={{
+                  fontSize: '30px',
+                  fontWeight: 'bold'
+                }}>
+                  {projectFilter === 'all' ? stats.totalCreatives : 
+                   dashboardData.projectStats[projectFilter]?.totalCreatives || 0}
+                </p>
+                <p style={{
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '12px',
+                  marginTop: '4px'
+                }}>in project</p>
+              </div>
+              <Eye style={{ width: '32px', height: '32px', color: 'rgba(255, 255, 255, 0.7)' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div style={{
+          backgroundColor: '#374151',
+          padding: '24px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px'
+          }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{
+                position: 'absolute',
+                left: '12px',
+                top: '12px',
+                width: '20px',
+                height: '20px',
+                color: '#9ca3af'
+              }} />
+              <input
+                type="text"
+                placeholder="Search creatives..."
+                style={{
+                  width: '100%',
+                  backgroundColor: '#4b5563',
+                  color: 'white',
+                  paddingLeft: '40px',
+                  paddingRight: '16px',
+                  paddingTop: '12px',
+                  paddingBottom: '12px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  boxSizing: 'border-box'
+                }}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <select 
+              style={{
+                backgroundColor: '#4b5563',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none'
+              }}
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+            >
+              <option value="all">🎯 All Projects</option>
+              {Object.entries(config).map(([projectKey, project]) => (
+                <option key={projectKey} value={projectKey}>
+                  {project.emoji} {project.name} ({dashboardData.projectStats[projectKey]?.totalCreatives || 0})
+                </option>
+              ))}
+            </select>
+
+            <select 
+              style={{
+                backgroundColor: '#4b5563',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none'
+              }}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">📋 All statuses</option>
+              <option value="active">🟢 Active ({
+                projectFilter === 'all' ? stats.activeCreatives : 
+                dashboardData.projectStats[projectFilter]?.activeCreatives || 0
+              })</option>
+              <option value="free">⚪ Free</option>
+            </select>
+
+            <select 
+              style={{
+                backgroundColor: '#4b5563',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none'
+              }}
+              value={accountFilter}
+              onChange={(e) => setAccountFilter(e.target.value)}
+            >
+              <option value="all">🏢 All accounts</option>
+              {dashboardData.allAccounts.map(account => (
+                <option key={account} value={account}>
+                  {account.length > 20 ? account.substring(0, 20) + '...' : account}
+                </option>
+              ))}
+            </select>
+
+            <select 
+              style={{
+                backgroundColor: '#4b5563',
+                color: 'white',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                border: 'none'
+              }}
+              value={performanceFilter}
+              onChange={(e) => setPerformanceFilter(e.target.value)}
+            >
+              <option value="all">📊 All performance</option>
+              <option value="high">🔥 High (200+ users)</option>
+              <option value="medium">📈 Medium (50-200 or new)</option>
+              <option value="low">📉 Low (3+ accounts, &lt;2/day)</option>
+            </select>
+
+            <div style={{
+              backgroundColor: '#4b5563',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              color: '#d1d5db',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <Filter style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+              Showing: {filteredCreatives.length}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Creatives Table */}
+      <div style={{
+        backgroundColor: '#374151',
+        borderRadius: '12px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden'
+      }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%' }}>
+            <thead style={{ backgroundColor: '#4b5563' }}>
+              <tr>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Status</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Project</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Creative</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Current Users</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Total All Time</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>Current Accounts</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📅 Days Active</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📊 Avg/day</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>🏢 Total Accounts</th>
+                <th style={{ textAlign: 'left', padding: '16px', fontWeight: '600' }}>📈 Performance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCreatives.map((creative, index) => {
+                const isActive = creative.status === 'active';
+                const performanceColor = creative.performance === 'high' ? '#10b981' : 
+                                       creative.performance === 'medium' ? '#f59e0b' : '#ef4444';
+                const projectConfig = config[creative.project] || { name: creative.project, emoji: '📊' };
+                
+                return (
+                  <tr 
+                    key={creative.id} 
+                    style={{
+                      borderTop: '1px solid #4b5563',
+                      backgroundColor: index % 2 === 0 ? '#374151' : '#475569'
+                    }}
+                  >
+                    <td style={{ padding: '16px' }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        width: 'fit-content',
+                        backgroundColor: isActive ? '#065f46' : '#4b5563',
+                        color: isActive ? '#10b981' : '#d1d5db',
+                        border: `1px solid ${isActive ? '#10b981' : '#6b7280'}`
+                      }}>
+                        {isActive ? <Play style={{ width: '12px', height: '12px' }} /> : <Pause style={{ width: '12px', height: '12px' }} />}
+                        {isActive ? 'Active' : 'Free'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        width: 'fit-content',
+                        backgroundColor: creative.project === 'SnellCoin' ? '#065f46' : '#581c87',
+                        color: creative.project === 'SnellCoin' ? '#10b981' : '#a78bfa',
+                        border: creative.project === 'SnellCoin' ? '1px solid #10b981' : '1px solid #a78bfa'
+                      }}>
+                        {projectConfig.emoji} {projectConfig.name}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: '500' }}>
+                        <div style={{ color: 'white', fontFamily: 'monospace' }}>{creative.creative}</div>
+                        <div style={{
+                          fontSize: '14px',
+                          color: '#9ca3af'
+                        }}>
+                          {creative.creative.includes('.mp4') ? '🎥 Video' : '🎨 Creative'}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      {isActive ? (
+                        <div style={{
+                          fontFamily: 'monospace',
+                          fontSize: '18px',
+                          fontWeight: 'bold',
+                          color: creative.currentUsers > 5 ? '#10b981' : creative.currentUsers > 2 ? '#f59e0b' : '#9ca3af'
+                        }}>
+                          {creative.currentUsers}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#6b7280' }}>-</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{
+                        fontFamily: 'monospace',
+                        color: performanceColor
+                      }}>
+                        {creative.totalUsers.toLocaleString()}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px' }}>
+                      <div>
+                        {creative.currentAccounts.slice(0, 2).map(accInfo => (
+                          <span key={accInfo.account} style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            marginRight: '4px',
+                            marginBottom: '4px',
+                            backgroundColor: '#4b5563',
+                            color: '#d1d5db'
+                          }}>
+                            {accInfo.account.length > 10 ? accInfo.account.substring(0, 10) + '...' : accInfo.account} ({accInfo.users})
+                          </span>
+                        ))}
+                        {creative.currentAccounts.length > 2 && (
+                          <span style={{
+                            color: '#9ca3af',
+                            fontSize: '12px'
+                          }}>
+                            +{creative.currentAccounts.length - 2} more
+                          </span>
+                        )}
+                        {creative.currentAccounts.length === 0 && (
+                          <span style={{
+                            color: '#6b7280',
+                            fontSize: '14px'
+                          }}>Not active</span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', fontFamily: 'monospace' }}>{creative.daysActive}</td>
+                    <td style={{ padding: '16px', fontFamily: 'monospace' }}>{creative.avgUsersPerDay}</td>
+                    <td style={{ padding: '16px', fontFamily: 'monospace' }}>{creative.accounts.length}</td>
+                    <td style={{ padding: '16px' }}>
+                      <div style={{
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        width: 'fit-content',
+                        backgroundColor: creative.performance === 'high' ? '#065f46' :
+                        creative.performance === 'medium' ? '#92400e' : '#7f1d1d',
+                        color: creative.performance === 'high' ? '#10b981' :
+                        creative.performance === 'medium' ? '#fbbf24' : '#f87171'
+                      }}>
+                        {creative.performance === 'high' ? '🔥 High' :
+                         creative.performance === 'medium' ? '📈 Medium' :
+                         '📉 Low'}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {filteredCreatives.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '48px 0'
+        }}>
+          <Eye style={{
+            width: '64px',
+            height: '64px',
+            color: '#6b7280',
+            margin: '0 auto 16px auto'
+          }} />
+          <p style={{
+            color: '#9ca3af',
+            fontSize: '18px'
+          }}>No creatives found</p>
+          <p style={{
+            color: '#6b7280',
+            fontSize: '14px'
+          }}>Try changing your search filters</p>
+        </div>
       )}
     </div>
   );
