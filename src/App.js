@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Play, Pause, Eye, Users, Target, Filter, Search, RefreshCw, BarChart3, AlertCircle, Settings, Save, X } from 'lucide-react';
+// ИСПРАВЛЕНО: Удалены неиспользуемые иконки, чтобы исправить ошибку сборки
+import { Eye, Search, RefreshCw, AlertCircle, Settings, Save, X } from 'lucide-react';
 
 function App() {
   // Состояния для фильтров
@@ -490,3 +491,4 @@ function App() {
 }
 
 export default App;
+
